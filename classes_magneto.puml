@@ -1,0 +1,103 @@
+@startuml classes_magneto
+set namespaceSeparator none
+class "AppConfig" as src.magneto.config.AppConfig {
+  allowed_origins : tuple[str, ...]
+  download_dir : str
+  download_path : Path
+  max_torrent_upload_bytes : int
+  notify_config_path : str | None
+  notify_enabled : bool
+  notify_routes : tuple[tuple[str, str, str | None], ...]
+  notify_service : str
+  notify_shock_relay_root : str | None
+  notify_state_file : str | None
+  notify_tag : str | None
+  notify_target : str | None
+  password : str | None
+  public_origin : str | None
+  request_timeout : float
+  secret_key : str
+  transmission_url : str
+  username : str | None
+  from_env() -> AppConfig
+}
+class "<color:red>AutoPassCredentialError</color>" as src.magneto.autopass.AutoPassCredentialError {
+}
+class "<color:red>ConfigurationError</color>" as src.magneto.config.ConfigurationError {
+}
+class "NotificationConfig" as src.magneto.notifications.NotificationConfig {
+  config_path : str | None
+  enabled : bool
+  routes : tuple[NotificationRoute, ...]
+  service : str
+  shock_relay_root : Path
+  state_file : Path
+  tag : str | None
+  target : str | None
+  from_app_config(config: AppConfig) -> NotificationConfig
+  resolved_routes() -> tuple[NotificationRoute, ...]
+}
+class "<color:red>NotificationError</color>" as src.magneto.notifications.NotificationError {
+}
+class "NotificationResult" as src.magneto.notifications.NotificationResult {
+  disabled : bool
+  sent : int
+  skipped : int
+}
+class "NotificationRoute" as src.magneto.notifications.NotificationRoute {
+  config_path : str | None
+  service : str
+  target : str
+}
+class "ResponseLike" as src.magneto.transmission.ResponseLike {
+  headers : dict[str, str]
+  status_code : int
+  text : str
+  json() -> dict[str, Any]
+  raise_for_status() -> None
+}
+class "ShockRelayNotifier" as src.magneto.notifications.ShockRelayNotifier {
+  config
+  available() -> bool
+  send(subject: str, body: str) -> bool
+  send_all(subject: str, body: str) -> int
+}
+class "TorrentClient" as src.magneto.notifications.TorrentClient {
+  list_torrents() -> list[dict]
+}
+class "TorrentNotificationMonitor" as src.magneto.notifications.TorrentNotificationMonitor {
+  client
+  notifier
+  state_file : Path
+  run_once() -> NotificationResult
+}
+class "TransmissionClient" as src.magneto.transmission.TransmissionClient {
+  auth : tuple[str, str] | None
+  password : str | None
+  session_id : str | None
+  timeout : float
+  transport
+  url : str
+  username : str | None
+  add_magnet(magnet: str, download_dir: str) -> dict[str, Any]
+  add_torrent_file(content: bytes, download_dir: str) -> dict[str, Any]
+  call(method: str, arguments: dict[str, Any] | None) -> dict[str, Any]
+  list_torrents() -> list[dict[str, Any]]
+  pause(torrent_id: int) -> None
+  reannounce(torrent_id: int) -> None
+  remove(torrent_id: int) -> None
+  restart(torrent_id: int) -> None
+  resume(torrent_id: int) -> None
+  set_seed_ratio(torrent_id: int) -> None
+  set_upload_limit(torrent_id: int) -> None
+}
+class "<color:red>TransmissionError</color>" as src.magneto.transmission.TransmissionError {
+}
+class "Transport" as src.magneto.transmission.Transport {
+  post(url: str) -> ResponseLike
+}
+src.magneto.notifications.ShockRelayNotifier --> src.magneto.notifications.NotificationConfig : config
+src.magneto.notifications.TorrentNotificationMonitor --> src.magneto.notifications.ShockRelayNotifier : notifier
+src.magneto.notifications.TorrentNotificationMonitor --> src.magneto.notifications.TorrentClient : client
+src.magneto.transmission.TransmissionClient --> src.magneto.transmission.Transport : transport
+@enduml

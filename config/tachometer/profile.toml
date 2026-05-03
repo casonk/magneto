@@ -1,0 +1,18 @@
+[repo]
+name = "magneto"
+category = "util-repos"
+kind = "python-web"
+
+[paths]
+disk_path = "."
+profile_path = ".tachometer/profile.json"
+summary_path = ".tachometer/summary.json"
+
+[defaults]
+label = "repo-snapshot"
+
+# [notify] values are machine-local; do not commit real contact identifiers here.
+[notify]
+shock_relay_root = ""
+service = "signal"
+target = ""

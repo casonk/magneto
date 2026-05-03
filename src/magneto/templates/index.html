@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Magneto</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+    <script defer src="{{ url_for('static', filename='app.js') }}"></script>
+  </head>
+  <body>
+    <main class="shell">
+      <header class="topbar">
+        <div>
+          <h1>Magneto</h1>
+          <p>{{ download_dir }}</p>
+        </div>
+        <a class="refresh" href="{{ url_for('index') }}">Refresh</a>
+      </header>
+
+      {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+          <section class="messages" aria-live="polite">
+            {% for category, message in messages %}
+              <div class="message {{ category }}">{{ message }}</div>
+            {% endfor %}
+          </section>
+        {% endif %}
+      {% endwith %}
+
+      {% if status_error %}
+        <section class="message error">{{ status_error }}</section>
+      {% endif %}
+
+      <section class="add-panel">
+        <form method="post" action="{{ url_for('add_torrent') }}" enctype="multipart/form-data">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+          <label for="magnet">Magnet link</label>
+          <textarea id="magnet" name="magnet" rows="4" spellcheck="false" autocapitalize="none" autocomplete="off" placeholder="magnet:?xt=urn:btih:..."></textarea>
+          <div class="file-row">
+            <label for="torrent_file">Torrent file</label>
+            <input id="torrent_file" type="file" name="torrent_file" accept=".torrent,application/x-bittorrent">
+          </div>
+          <button class="primary" type="submit">Add torrent</button>
+        </form>
+      </section>
+
+      <section
+        class="torrent-list"
+        aria-label="Torrents"
+        data-torrent-list
+        data-refresh-url="{{ url_for('torrent_list_fragment') }}"
+        data-visible-interval="4000"
+        data-hidden-interval="60000"
+      >
+        {% include "_torrent_list.html" %}
+      </section>
+    </main>
+  </body>
+</html>
