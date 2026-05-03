@@ -1,0 +1,66 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "magneto"
+version = "0.1.0"
+description = "Private Transmission web control for Snowbridge downloads."
+readme = "README.md"
+requires-python = ">=3.10"
+license = { text = "Private-use only" }
+authors = [
+  { name = "Cason Konzer", email = "casonk@umich.edu" },
+]
+keywords = ["transmission", "torrent", "snowbridge", "flask"]
+classifiers = [
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3 :: Only",
+  "Operating System :: POSIX :: Linux",
+  "Topic :: Internet :: WWW/HTTP :: WSGI :: Application",
+  "Topic :: Utilities",
+]
+dependencies = [
+  "Flask>=3.0",
+  "requests>=2.31",
+]
+
+[project.optional-dependencies]
+dev = [
+  "pytest>=8",
+  "ruff",
+  "black",
+  "dyno_lab @ git+https://github.com/casonk/dyno-lab.git",
+]
+
+[project.scripts]
+magneto = "magneto.cli:main"
+
+[tool.setuptools]
+package-dir = { "" = "src" }
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+magneto = ["templates/*.html", "static/*.css", "static/*.js"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["src"]
+
+[tool.black]
+line-length = 100
+target-version = ["py310"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py310"
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "UP", "B", "SIM"]
+ignore = ["E501", "B008", "SIM108"]

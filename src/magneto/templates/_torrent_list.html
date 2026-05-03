@@ -1,0 +1,128 @@
+{% if torrents %}
+  {% for torrent in torrents %}
+    <article class="torrent">
+      <div class="torrent-head">
+        <h2>{{ torrent.name }}</h2>
+        <span class="status {{ torrent.statusClass }}">{{ torrent.statusLabel }}</span>
+      </div>
+      {% if torrent.errorString %}
+        <p class="torrent-error">{{ torrent.errorString }}</p>
+      {% endif %}
+      {% if torrent.trackerStatus %}
+        <p class="torrent-note">{{ torrent.trackerStatus }}</p>
+      {% endif %}
+      <div class="progress" aria-label="{{ torrent.percentText }} complete">
+        <div style="width: {{ torrent.percentValue }}%"></div>
+      </div>
+      <dl class="metrics">
+        <div>
+          <dt>Done</dt>
+          <dd>{{ torrent.percentText }}</dd>
+        </div>
+        <div>
+          <dt>Down</dt>
+          <dd>{{ torrent.rateDownloadText }}</dd>
+        </div>
+        <div>
+          <dt>Up</dt>
+          <dd>{{ torrent.rateUploadText }}</dd>
+        </div>
+        <div>
+          <dt>Left</dt>
+          <dd>{{ torrent.leftText }}</dd>
+        </div>
+        <div>
+          <dt>Size</dt>
+          <dd>{{ torrent.totalSizeText }}</dd>
+        </div>
+        <div>
+          <dt>Downloaded</dt>
+          <dd>{{ torrent.downloadedText }}</dd>
+        </div>
+        <div>
+          <dt>Uploaded</dt>
+          <dd>{{ torrent.uploadedText }}</dd>
+        </div>
+        <div>
+          <dt>ETA</dt>
+          <dd>{{ torrent.etaText }}</dd>
+        </div>
+        <div>
+          <dt>Peers</dt>
+          <dd>{{ torrent.peersConnected }}</dd>
+        </div>
+        <div>
+          <dt>Metadata</dt>
+          <dd>{{ torrent.metadataText }}</dd>
+        </div>
+        <div>
+          <dt>Seed</dt>
+          <dd>{{ torrent.seedLimitText }}</dd>
+        </div>
+        <div>
+          <dt>Upload cap</dt>
+          <dd>{{ torrent.uploadLimitText }}</dd>
+        </div>
+      </dl>
+      <div class="torrent-settings">
+        <form method="post" action="{{ url_for('torrent_action', torrent_id=torrent.id, action='throttle-upload') }}">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+          <label for="upload-limit-{{ torrent.id }}">Upload KB/s</label>
+          <div class="inline-control">
+            <input
+              id="upload-limit-{{ torrent.id }}"
+              type="number"
+              name="upload_limit_kbps"
+              min="0"
+              max="10000000"
+              step="1"
+              inputmode="numeric"
+              value="{{ torrent.uploadLimitKbps if torrent.uploadLimited else '' }}"
+              placeholder="0"
+            >
+            <button type="submit">Set</button>
+          </div>
+        </form>
+        {% if torrent.seedLimitEnabled and torrent.seedRatioLimit == 0 %}
+          <form method="post" action="{{ url_for('torrent_action', torrent_id=torrent.id, action='allow-seed') }}">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+            <button type="submit">Allow seed</button>
+          </form>
+        {% else %}
+          <form method="post" action="{{ url_for('torrent_action', torrent_id=torrent.id, action='no-seed') }}">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+            <button type="submit">No seed</button>
+          </form>
+        {% endif %}
+      </div>
+      <div class="actions">
+        <form method="post" action="{{ url_for('torrent_action', torrent_id=torrent.id, action='pause') }}">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+          <button type="submit">Pause</button>
+        </form>
+        <form method="post" action="{{ url_for('torrent_action', torrent_id=torrent.id, action='resume') }}">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+          <button type="submit">Resume</button>
+        </form>
+        <form method="post" action="{{ url_for('torrent_action', torrent_id=torrent.id, action='restart') }}">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+          <button type="submit">Restart</button>
+        </form>
+        <form method="post" action="{{ url_for('torrent_action', torrent_id=torrent.id, action='reannounce') }}">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+          <button type="submit">Reannounce</button>
+        </form>
+        <form method="post" action="{{ url_for('torrent_action', torrent_id=torrent.id, action='remove') }}">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+          <button type="submit">Remove</button>
+        </form>
+        <form method="post" action="{{ url_for('torrent_action', torrent_id=torrent.id, action='cancel') }}">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+          <button class="danger" type="submit">Cancel</button>
+        </form>
+      </div>
+    </article>
+  {% endfor %}
+{% else %}
+  <p class="empty">No torrents are currently visible in Transmission.</p>
+{% endif %}

@@ -1,0 +1,21 @@
+@startuml packages_magneto
+set namespaceSeparator none
+package "conftest" as conftest {
+}
+package "src.magneto" as src.magneto {
+}
+package "src.magneto.__main__" as src.magneto.__main__ {
+}
+package "src.magneto.autopass" as src.magneto.autopass {
+}
+package "src.magneto.cli" as src.magneto.cli {
+}
+package "src.magneto.config" as src.magneto.config {
+}
+package "src.magneto.notifications" as src.magneto.notifications {
+}
+package "src.magneto.transmission" as src.magneto.transmission {
+}
+package "src.magneto.web" as src.magneto.web {
+}
+@enduml
