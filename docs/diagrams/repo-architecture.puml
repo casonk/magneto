@@ -1,0 +1,29 @@
+@startuml
+!pragma layout elk
+title magneto repository architecture
+
+package "magneto" {
+  component "web.py\nFlask blueprints + routes" as WEB
+  component "transmission.py\nTransmission RPC client" as TC
+  component "cli.py\nCLI entrypoint" as CLI
+}
+
+actor "Browser\n(phone / desktop)" as BROWSER
+component "wiring-harness\nCaddy / mTLS proxy" as CADDY
+database "Transmission daemon\n(local RPC)" as TRANSMISSION
+folder "Snowbridge share\n(download destination)" as SNOWBRIDGE
+artifact "config/magneto.env.local\n(gitignored)" as CONFIG
+
+BROWSER --> CADDY : HTTPS (LAN / VPN)
+CADDY --> WEB : localhost:5430
+CLI --> WEB : flask run
+WEB --> TC : add / pause / resume / remove
+TC --> TRANSMISSION : JSON-RPC (127.0.0.1:9091)
+TRANSMISSION --> SNOWBRIDGE : completed downloads
+CONFIG --> TC : host, port, credentials
+
+note right of CONFIG
+Gitignored — never tracked.
+end note
+
+@enduml
