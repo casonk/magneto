@@ -1,0 +1,137 @@
+@startuml
+title magneto Shell Script Flow
+left to right direction
+skinparam shadowing false
+skinparam defaultFontName Monospace
+skinparam componentStyle rectangle
+skinparam linetype ortho
+rectangle "scripts/apply_host_setup.sh\n0 local shell edges\n13 external tools" as shell_scripts_apply_host_setup_sh #DBEAFE
+rectangle "scripts/apply_magneto_stack.sh\n0 local shell edges\n9 external tools" as shell_scripts_apply_magneto_stack_sh #DBEAFE
+rectangle "scripts/apply_transmission_vpn_guard.sh\n0 local shell edges\n1 external tool" as shell_scripts_apply_transmission_vpn_guard_sh #DBEAFE
+rectangle "scripts/diagnose_transmission_vpn.sh\n0 local shell edges\n13 external tools" as shell_scripts_diagnose_transmission_vpn_sh #DBEAFE
+rectangle "scripts/install_transmission_daemon_backend.sh\n0 local shell edges\n12 external tools" as shell_scripts_install_transmission_daemon_backend_sh #DBEAFE
+rectangle "scripts/install_transmission_vpn_guard.sh\n0 local shell edges\n5 external tools" as shell_scripts_install_transmission_vpn_guard_sh #DBEAFE
+rectangle "scripts/install_web_service.sh\n0 local shell edges\n7 external tools" as shell_scripts_install_web_service_sh #DBEAFE
+rectangle "scripts/run_tachometer_profile.sh\n0 local shell edges\n6 external tools" as shell_scripts_run_tachometer_profile_sh #DBEAFE
+rectangle "scripts/transmission_vpn_guard.sh\n0 local shell edges\n6 external tools" as shell_scripts_transmission_vpn_guard_sh #DBEAFE
+cloud "(cd" as tool_cd #FEF3C7
+cloud "10" as tool_tool_10 #FEF3C7
+cloud "agent-utilization" as tool_agent_utilization #FEF3C7
+cloud "apply_host_setup.sh" as tool_apply_host_setup_sh #FEF3C7
+cloud "apply_transmission_vpn_guard.sh" as tool_apply_transmission_vpn_guard_sh #FEF3C7
+cloud "args+=(--transmission-service" as tool_args_transmission_service #FEF3C7
+cloud "args+=(--uid" as tool_args_uid #FEF3C7
+cloud "args+=(--vpn-transport-fwmark" as tool_args_vpn_transport_fwmark #FEF3C7
+cloud "args+=(--vpn-transport-port" as tool_args_vpn_transport_port #FEF3C7
+cloud "args+=(--with-wiring-harness" as tool_args_with_wiring_harness #FEF3C7
+cloud "awk" as tool_awk #FEF3C7
+cloud "cat" as tool_cat #FEF3C7
+cloud "chmod" as tool_chmod #FEF3C7
+cloud "clockwork" as tool_clockwork #FEF3C7
+cloud "cp" as tool_cp #FEF3C7
+cloud "curl" as tool_curl #FEF3C7
+cloud "cut" as tool_cut #FEF3C7
+cloud "get" as tool_get #FEF3C7
+cloud "grep" as tool_grep #FEF3C7
+cloud "host-snapshot" as tool_host_snapshot #FEF3C7
+cloud "host-summarize" as tool_host_summarize #FEF3C7
+cloud "id" as tool_id #FEF3C7
+cloud "install_transmission_vpn_guard.sh" as tool_install_transmission_vpn_guard_sh #FEF3C7
+cloud "install_web_service.sh" as tool_install_web_service_sh #FEF3C7
+cloud "ip" as tool_ip #FEF3C7
+cloud "magneto" as tool_magneto #FEF3C7
+cloud "mapfile" as tool_mapfile #FEF3C7
+cloud "mkdir" as tool_mkdir #FEF3C7
+cloud "nft" as tool_nft #FEF3C7
+cloud "nordvpn" as tool_nordvpn #FEF3C7
+cloud "pip" as tool_pip #FEF3C7
+cloud "python" as tool_python #FEF3C7
+cloud "rm" as tool_rm #FEF3C7
+cloud "run" as tool_run #FEF3C7
+cloud "seconds" as tool_seconds #FEF3C7
+cloud "sleep" as tool_sleep #FEF3C7
+cloud "sort" as tool_sort #FEF3C7
+cloud "ss" as tool_ss #FEF3C7
+cloud "summarize" as tool_summarize #FEF3C7
+cloud "systemctl" as tool_systemctl #FEF3C7
+cloud "tachometer" as tool_tachometer #FEF3C7
+cloud "venv" as tool_venv #FEF3C7
+cloud "yes" as tool_yes #FEF3C7
+shell_scripts_apply_host_setup_sh --> tool_cd
+shell_scripts_apply_host_setup_sh --> tool_args_transmission_service
+shell_scripts_apply_host_setup_sh --> tool_cat
+shell_scripts_apply_host_setup_sh --> tool_chmod
+shell_scripts_apply_host_setup_sh --> tool_cp
+shell_scripts_apply_host_setup_sh --> tool_install_transmission_vpn_guard_sh
+shell_scripts_apply_host_setup_sh --> tool_install_web_service_sh
+shell_scripts_apply_host_setup_sh --> tool_mapfile
+shell_scripts_apply_host_setup_sh --> tool_pip
+shell_scripts_apply_host_setup_sh --> tool_python
+shell_scripts_apply_host_setup_sh --> tool_sleep
+shell_scripts_apply_host_setup_sh --> tool_systemctl
+shell_scripts_apply_host_setup_sh --> tool_venv
+shell_scripts_apply_magneto_stack_sh --> tool_apply_host_setup_sh
+shell_scripts_apply_magneto_stack_sh --> tool_apply_transmission_vpn_guard_sh
+shell_scripts_apply_magneto_stack_sh --> tool_args_with_wiring_harness
+shell_scripts_apply_magneto_stack_sh --> tool_cat
+shell_scripts_apply_magneto_stack_sh --> tool_clockwork
+shell_scripts_apply_magneto_stack_sh --> tool_curl
+shell_scripts_apply_magneto_stack_sh --> tool_magneto
+shell_scripts_apply_magneto_stack_sh --> tool_nft
+shell_scripts_apply_magneto_stack_sh --> tool_systemctl
+shell_scripts_apply_transmission_vpn_guard_sh --> tool_cat
+shell_scripts_diagnose_transmission_vpn_sh --> tool_args_uid
+shell_scripts_diagnose_transmission_vpn_sh --> tool_args_vpn_transport_fwmark
+shell_scripts_diagnose_transmission_vpn_sh --> tool_args_vpn_transport_port
+shell_scripts_diagnose_transmission_vpn_sh --> tool_cat
+shell_scripts_diagnose_transmission_vpn_sh --> tool_grep
+shell_scripts_diagnose_transmission_vpn_sh --> tool_id
+shell_scripts_diagnose_transmission_vpn_sh --> tool_install_transmission_vpn_guard_sh
+shell_scripts_diagnose_transmission_vpn_sh --> tool_ip
+shell_scripts_diagnose_transmission_vpn_sh --> tool_mapfile
+shell_scripts_diagnose_transmission_vpn_sh --> tool_nordvpn
+shell_scripts_diagnose_transmission_vpn_sh --> tool_seconds
+shell_scripts_diagnose_transmission_vpn_sh --> tool_sleep
+shell_scripts_diagnose_transmission_vpn_sh --> tool_yes
+shell_scripts_install_transmission_daemon_backend_sh --> tool_awk
+shell_scripts_install_transmission_daemon_backend_sh --> tool_cat
+shell_scripts_install_transmission_daemon_backend_sh --> tool_chmod
+shell_scripts_install_transmission_daemon_backend_sh --> tool_cut
+shell_scripts_install_transmission_daemon_backend_sh --> tool_get
+shell_scripts_install_transmission_daemon_backend_sh --> tool_grep
+shell_scripts_install_transmission_daemon_backend_sh --> tool_mapfile
+shell_scripts_install_transmission_daemon_backend_sh --> tool_python
+shell_scripts_install_transmission_daemon_backend_sh --> tool_rm
+shell_scripts_install_transmission_daemon_backend_sh --> tool_sleep
+shell_scripts_install_transmission_daemon_backend_sh --> tool_sort
+shell_scripts_install_transmission_daemon_backend_sh --> tool_ss
+shell_scripts_install_transmission_vpn_guard_sh --> tool_cat
+shell_scripts_install_transmission_vpn_guard_sh --> tool_grep
+shell_scripts_install_transmission_vpn_guard_sh --> tool_id
+shell_scripts_install_transmission_vpn_guard_sh --> tool_rm
+shell_scripts_install_transmission_vpn_guard_sh --> tool_systemctl
+shell_scripts_install_web_service_sh --> tool_cat
+shell_scripts_install_web_service_sh --> tool_chmod
+shell_scripts_install_web_service_sh --> tool_cp
+shell_scripts_install_web_service_sh --> tool_mkdir
+shell_scripts_install_web_service_sh --> tool_pip
+shell_scripts_install_web_service_sh --> tool_systemctl
+shell_scripts_install_web_service_sh --> tool_venv
+shell_scripts_run_tachometer_profile_sh --> tool_agent_utilization
+shell_scripts_run_tachometer_profile_sh --> tool_host_snapshot
+shell_scripts_run_tachometer_profile_sh --> tool_host_summarize
+shell_scripts_run_tachometer_profile_sh --> tool_run
+shell_scripts_run_tachometer_profile_sh --> tool_summarize
+shell_scripts_run_tachometer_profile_sh --> tool_tachometer
+shell_scripts_transmission_vpn_guard_sh --> tool_tool_10
+shell_scripts_transmission_vpn_guard_sh --> tool_cat
+shell_scripts_transmission_vpn_guard_sh --> tool_id
+shell_scripts_transmission_vpn_guard_sh --> tool_nft
+shell_scripts_transmission_vpn_guard_sh --> tool_rm
+shell_scripts_transmission_vpn_guard_sh --> tool_yes
+note as shellGraphSummary
+Scanned 9 shell scripts.
+Detected 0 local shell edges.
+Detected 43 external tools.
+end note
+@enduml
