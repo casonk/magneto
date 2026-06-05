@@ -1,0 +1,14 @@
+@startuml packages_magneto
+set namespaceSeparator none
+top to bottom direction
+skinparam componentStyle rectangle
+rectangle "conftest\n1 python file" as conftest
+rectangle "src.magneto\n0 child pkg, 7 modules\n8 python files\nexamples: __main__, autopass, cli" as src.magneto
+rectangle "src.magneto.__main__\n1 python file" as src.magneto.__main__
+rectangle "src.magneto.autopass\n1 python file" as src.magneto.autopass
+rectangle "src.magneto.cli\n1 python file" as src.magneto.cli
+rectangle "src.magneto.config\n1 python file" as src.magneto.config
+rectangle "src.magneto.notifications\n1 python file" as src.magneto.notifications
+rectangle "src.magneto.transmission\n1 python file" as src.magneto.transmission
+rectangle "src.magneto.web\n1 python file" as src.magneto.web
+@enduml

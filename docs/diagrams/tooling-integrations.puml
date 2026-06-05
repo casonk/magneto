@@ -1,0 +1,154 @@
+@startuml
+title magneto Tooling Integrations
+left to right direction
+skinparam shadowing false
+skinparam defaultFontName Monospace
+skinparam componentStyle rectangle
+skinparam linetype ortho
+rectangle ".github/workflows/ci.yml\n6 detected tools" as source_github_workflows_ci_yml #E0F2FE
+rectangle ".github/workflows/secret-scan.yml\n2 detected tools" as source_github_workflows_secret_scan_yml #E0F2FE
+rectangle "scripts/apply_host_setup.sh\n14 detected tools" as source_scripts_apply_host_setup_sh #E0F2FE
+rectangle "scripts/apply_magneto_stack.sh\n9 detected tools" as source_scripts_apply_magneto_stack_sh #E0F2FE
+rectangle "scripts/apply_transmission_vpn_guard.sh\n1 detected tool" as source_scripts_apply_transmission_vpn_guard_sh #E0F2FE
+rectangle "scripts/diagnose_transmission_vpn.sh\n13 detected tools" as source_scripts_diagnose_transmission_vpn_sh #E0F2FE
+rectangle "scripts/install_transmission_daemon_backend.sh\n12 detected tools" as source_scripts_install_transmission_daemon_backend_sh #E0F2FE
+rectangle "scripts/install_transmission_vpn_guard.sh\n5 detected tools" as source_scripts_install_transmission_vpn_guard_sh #E0F2FE
+rectangle "scripts/install_web_service.sh\n7 detected tools" as source_scripts_install_web_service_sh #E0F2FE
+rectangle "scripts/run_tachometer_profile.sh\n6 detected tools" as source_scripts_run_tachometer_profile_sh #E0F2FE
+rectangle "scripts/transmission_vpn_guard.sh\n6 detected tools" as source_scripts_transmission_vpn_guard_sh #E0F2FE
+cloud "(cd" as tool_cd #FEF3C7
+cloud "10" as tool_tool_10 #FEF3C7
+cloud "actions/checkout" as tool_actions_checkout #FEF3C7
+cloud "actions/setup-python" as tool_actions_setup_python #FEF3C7
+cloud "agent-utilization" as tool_agent_utilization #FEF3C7
+cloud "apply_host_setup.sh" as tool_apply_host_setup_sh #FEF3C7
+cloud "apply_transmission_vpn_guard.sh" as tool_apply_transmission_vpn_guard_sh #FEF3C7
+cloud "args+=(--transmission-service" as tool_args_transmission_service #FEF3C7
+cloud "args+=(--uid" as tool_args_uid #FEF3C7
+cloud "args+=(--vpn-transport-fwmark" as tool_args_vpn_transport_fwmark #FEF3C7
+cloud "args+=(--vpn-transport-port" as tool_args_vpn_transport_port #FEF3C7
+cloud "args+=(--with-wiring-harness" as tool_args_with_wiring_harness #FEF3C7
+cloud "awk" as tool_awk #FEF3C7
+cloud "bash" as tool_bash #FEF3C7
+cloud "black" as tool_black #FEF3C7
+cloud "cat" as tool_cat #FEF3C7
+cloud "chmod" as tool_chmod #FEF3C7
+cloud "clockwork" as tool_clockwork #FEF3C7
+cloud "cp" as tool_cp #FEF3C7
+cloud "curl" as tool_curl #FEF3C7
+cloud "cut" as tool_cut #FEF3C7
+cloud "get" as tool_get #FEF3C7
+cloud "gitleaks/gitleaks-action" as tool_gitleaks_gitleaks_action #FEF3C7
+cloud "grep" as tool_grep #FEF3C7
+cloud "host-snapshot" as tool_host_snapshot #FEF3C7
+cloud "host-summarize" as tool_host_summarize #FEF3C7
+cloud "id" as tool_id #FEF3C7
+cloud "install_transmission_vpn_guard.sh" as tool_install_transmission_vpn_guard_sh #FEF3C7
+cloud "install_web_service.sh" as tool_install_web_service_sh #FEF3C7
+cloud "ip" as tool_ip #FEF3C7
+cloud "magneto" as tool_magneto #FEF3C7
+cloud "mapfile" as tool_mapfile #FEF3C7
+cloud "mkdir" as tool_mkdir #FEF3C7
+cloud "nft" as tool_nft #FEF3C7
+cloud "nordvpn" as tool_nordvpn #FEF3C7
+cloud "pip" as tool_pip #FEF3C7
+cloud "pytest" as tool_pytest #FEF3C7
+cloud "python" as tool_python #FEF3C7
+cloud "rm" as tool_rm #FEF3C7
+cloud "ruff" as tool_ruff #FEF3C7
+cloud "run" as tool_run #FEF3C7
+cloud "seconds" as tool_seconds #FEF3C7
+cloud "sleep" as tool_sleep #FEF3C7
+cloud "sort" as tool_sort #FEF3C7
+cloud "ss" as tool_ss #FEF3C7
+cloud "summarize" as tool_summarize #FEF3C7
+cloud "systemctl" as tool_systemctl #FEF3C7
+cloud "tachometer" as tool_tachometer #FEF3C7
+cloud "venv" as tool_venv #FEF3C7
+cloud "yes" as tool_yes #FEF3C7
+source_github_workflows_ci_yml --> tool_actions_checkout
+source_github_workflows_ci_yml --> tool_actions_setup_python
+source_github_workflows_ci_yml --> tool_black
+source_github_workflows_ci_yml --> tool_pip
+source_github_workflows_ci_yml --> tool_pytest
+source_github_workflows_ci_yml --> tool_ruff
+source_github_workflows_secret_scan_yml --> tool_actions_checkout
+source_github_workflows_secret_scan_yml --> tool_gitleaks_gitleaks_action
+source_scripts_apply_host_setup_sh --> tool_cd
+source_scripts_apply_host_setup_sh --> tool_args_transmission_service
+source_scripts_apply_host_setup_sh --> tool_bash
+source_scripts_apply_host_setup_sh --> tool_cat
+source_scripts_apply_host_setup_sh --> tool_chmod
+source_scripts_apply_host_setup_sh --> tool_cp
+source_scripts_apply_host_setup_sh --> tool_install_transmission_vpn_guard_sh
+source_scripts_apply_host_setup_sh --> tool_install_web_service_sh
+source_scripts_apply_host_setup_sh --> tool_mapfile
+source_scripts_apply_host_setup_sh --> tool_pip
+source_scripts_apply_host_setup_sh --> tool_python
+source_scripts_apply_host_setup_sh --> tool_sleep
+source_scripts_apply_host_setup_sh --> tool_systemctl
+source_scripts_apply_host_setup_sh --> tool_venv
+source_scripts_apply_magneto_stack_sh --> tool_apply_host_setup_sh
+source_scripts_apply_magneto_stack_sh --> tool_apply_transmission_vpn_guard_sh
+source_scripts_apply_magneto_stack_sh --> tool_args_with_wiring_harness
+source_scripts_apply_magneto_stack_sh --> tool_cat
+source_scripts_apply_magneto_stack_sh --> tool_clockwork
+source_scripts_apply_magneto_stack_sh --> tool_curl
+source_scripts_apply_magneto_stack_sh --> tool_magneto
+source_scripts_apply_magneto_stack_sh --> tool_nft
+source_scripts_apply_magneto_stack_sh --> tool_systemctl
+source_scripts_apply_transmission_vpn_guard_sh --> tool_cat
+source_scripts_diagnose_transmission_vpn_sh --> tool_args_uid
+source_scripts_diagnose_transmission_vpn_sh --> tool_args_vpn_transport_fwmark
+source_scripts_diagnose_transmission_vpn_sh --> tool_args_vpn_transport_port
+source_scripts_diagnose_transmission_vpn_sh --> tool_cat
+source_scripts_diagnose_transmission_vpn_sh --> tool_grep
+source_scripts_diagnose_transmission_vpn_sh --> tool_id
+source_scripts_diagnose_transmission_vpn_sh --> tool_install_transmission_vpn_guard_sh
+source_scripts_diagnose_transmission_vpn_sh --> tool_ip
+source_scripts_diagnose_transmission_vpn_sh --> tool_mapfile
+source_scripts_diagnose_transmission_vpn_sh --> tool_nordvpn
+source_scripts_diagnose_transmission_vpn_sh --> tool_seconds
+source_scripts_diagnose_transmission_vpn_sh --> tool_sleep
+source_scripts_diagnose_transmission_vpn_sh --> tool_yes
+source_scripts_install_transmission_daemon_backend_sh --> tool_awk
+source_scripts_install_transmission_daemon_backend_sh --> tool_cat
+source_scripts_install_transmission_daemon_backend_sh --> tool_chmod
+source_scripts_install_transmission_daemon_backend_sh --> tool_cut
+source_scripts_install_transmission_daemon_backend_sh --> tool_get
+source_scripts_install_transmission_daemon_backend_sh --> tool_grep
+source_scripts_install_transmission_daemon_backend_sh --> tool_mapfile
+source_scripts_install_transmission_daemon_backend_sh --> tool_python
+source_scripts_install_transmission_daemon_backend_sh --> tool_rm
+source_scripts_install_transmission_daemon_backend_sh --> tool_sleep
+source_scripts_install_transmission_daemon_backend_sh --> tool_sort
+source_scripts_install_transmission_daemon_backend_sh --> tool_ss
+source_scripts_install_transmission_vpn_guard_sh --> tool_cat
+source_scripts_install_transmission_vpn_guard_sh --> tool_grep
+source_scripts_install_transmission_vpn_guard_sh --> tool_id
+source_scripts_install_transmission_vpn_guard_sh --> tool_rm
+source_scripts_install_transmission_vpn_guard_sh --> tool_systemctl
+source_scripts_install_web_service_sh --> tool_cat
+source_scripts_install_web_service_sh --> tool_chmod
+source_scripts_install_web_service_sh --> tool_cp
+source_scripts_install_web_service_sh --> tool_mkdir
+source_scripts_install_web_service_sh --> tool_pip
+source_scripts_install_web_service_sh --> tool_systemctl
+source_scripts_install_web_service_sh --> tool_venv
+source_scripts_run_tachometer_profile_sh --> tool_agent_utilization
+source_scripts_run_tachometer_profile_sh --> tool_host_snapshot
+source_scripts_run_tachometer_profile_sh --> tool_host_summarize
+source_scripts_run_tachometer_profile_sh --> tool_run
+source_scripts_run_tachometer_profile_sh --> tool_summarize
+source_scripts_run_tachometer_profile_sh --> tool_tachometer
+source_scripts_transmission_vpn_guard_sh --> tool_tool_10
+source_scripts_transmission_vpn_guard_sh --> tool_cat
+source_scripts_transmission_vpn_guard_sh --> tool_id
+source_scripts_transmission_vpn_guard_sh --> tool_nft
+source_scripts_transmission_vpn_guard_sh --> tool_rm
+source_scripts_transmission_vpn_guard_sh --> tool_yes
+note as toolingGraphSummary
+Scanned 11 tooling entrypoints.
+Detected 50 third-party tools.
+end note
+@enduml
