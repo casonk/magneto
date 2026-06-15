@@ -113,7 +113,9 @@ def create_app(
         try:
             if magnet:
                 _validate_magnet(magnet)
-                _client().add_magnet(magnet, app_config.download_dir)
+                _client().add_magnet(
+                    magnet, app_config.download_dir, no_seed=app_config.no_seed_by_default
+                )
                 flash("Torrent added.", "success")
             elif upload and upload.filename:
                 if not upload.filename.lower().endswith(".torrent"):
@@ -121,7 +123,9 @@ def create_app(
                 content = upload.read()
                 if not content:
                     raise ValueError("Uploaded torrent file was empty.")
-                _client().add_torrent_file(content, app_config.download_dir)
+                _client().add_torrent_file(
+                    content, app_config.download_dir, no_seed=app_config.no_seed_by_default
+                )
                 flash("Torrent file added.", "success")
             else:
                 raise ValueError("Paste a magnet link or choose a .torrent file.")

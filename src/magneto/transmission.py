@@ -133,20 +133,26 @@ class TransmissionClient:
         torrents = args.get("torrents") or []
         return [normalize_torrent(torrent) for torrent in torrents]
 
-    def add_magnet(self, magnet: str, download_dir: str) -> dict[str, Any]:
-        return self.call(
-            "torrent-add",
-            {"filename": magnet.strip(), "download-dir": download_dir},
-        )
+    def add_magnet(
+        self, magnet: str, download_dir: str, *, no_seed: bool = False
+    ) -> dict[str, Any]:
+        args: dict[str, Any] = {"filename": magnet.strip(), "download-dir": download_dir}
+        if no_seed:
+            args["seedRatioMode"] = 1
+            args["seedRatioLimit"] = 0.0
+        return self.call("torrent-add", args)
 
-    def add_torrent_file(self, content: bytes, download_dir: str) -> dict[str, Any]:
-        return self.call(
-            "torrent-add",
-            {
-                "metainfo": base64.b64encode(content).decode("ascii"),
-                "download-dir": download_dir,
-            },
-        )
+    def add_torrent_file(
+        self, content: bytes, download_dir: str, *, no_seed: bool = False
+    ) -> dict[str, Any]:
+        args: dict[str, Any] = {
+            "metainfo": base64.b64encode(content).decode("ascii"),
+            "download-dir": download_dir,
+        }
+        if no_seed:
+            args["seedRatioMode"] = 1
+            args["seedRatioLimit"] = 0.0
+        return self.call("torrent-add", args)
 
     def pause(self, torrent_id: int) -> None:
         self.call("torrent-stop", {"ids": [torrent_id]})

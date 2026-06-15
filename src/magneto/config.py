@@ -33,6 +33,7 @@ class AppConfig:
     notify_config_path: str | None = None
     notify_routes: tuple[tuple[str, str, str | None], ...] = ()
     notify_tag: str | None = None
+    no_seed_by_default: bool = False
 
     @classmethod
     def from_env(cls) -> AppConfig:
@@ -94,6 +95,7 @@ class AppConfig:
             notify_config_path=os.environ.get("MAGNETO_NOTIFY_CONFIG") or None,
             notify_routes=notify_routes,
             notify_tag=os.environ.get("MAGNETO_NOTIFY_TAG") or None,
+            no_seed_by_default=_truthy(os.environ.get("MAGNETO_NO_SEED_BY_DEFAULT")),
         )
 
     @property

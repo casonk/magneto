@@ -38,10 +38,10 @@ class FakeClient:
             }
         ]
 
-    def add_magnet(self, magnet, download_dir):
+    def add_magnet(self, magnet, download_dir, *, no_seed=False):
         self.calls.append(("add_magnet", magnet, download_dir))
 
-    def add_torrent_file(self, content, download_dir):
+    def add_torrent_file(self, content, download_dir, *, no_seed=False):
         self.calls.append(("add_torrent_file", content, download_dir))
 
     def pause(self, torrent_id):
