@@ -1,1 +1,26 @@
-[]
+[
+ {
+  "RuleID": "keepass-real-profile-name",
+  "Description": "Real KeePass profile name committed to a config or example file",
+  "StartLine": 34,
+  "EndLine": 34,
+  "StartColumn": 10,
+  "EndColumn": 24,
+  "Match": "profile=\"infra\"",
+  "Secret": "infra",
+  "File": "scripts/install_transmission_daemon_backend.sh",
+  "SymlinkFile": "",
+  "Commit": "92b5b262384452e56e86eb82c7a25bca6b1cf32d",
+  "Link": "https://github.com/casonk/magneto/blob/92b5b262384452e56e86eb82c7a25bca6b1cf32d/scripts/install_transmission_daemon_backend.sh#L34",
+  "Entropy": 2.321928,
+  "Author": "casonk",
+  "Email": "72440835+casonk@users.noreply.github.com",
+  "Date": "2026-05-03T15:15:57Z",
+  "Message": "feat: initial publish \u2014 Transmission web control for Snowbridge\n\nFlask-based torrent management UI over Transmission RPC, with KeePassXC\ncredential integration, shock-relay notifications, VPN guard scripts,\nand full governance baseline.\n\nCo-Authored-By: Claude Sonnet 4.6 <noreply@anthropic.com>",
+  "Tags": [
+   "keepass",
+   "sensitive-config"
+  ],
+  "Fingerprint": "92b5b262384452e56e86eb82c7a25bca6b1cf32d:scripts/install_transmission_daemon_backend.sh:keepass-real-profile-name:34"
+ }
+]
