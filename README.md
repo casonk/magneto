@@ -24,8 +24,8 @@ default Transmission RPC endpoint is loopback-only
 to `127.0.0.1` and `::1`.
 
 By default, Magneto resolves Transmission RPC auth through the sibling
-`auto-pass` repo using the `infra` profile and KeePassXC entry
-`magneto@transmission`. Leave `MAGNETO_TRANSMISSION_USERNAME` and
+`auto-pass` repo using the configured KeePassXC profile and entry path (see
+`config/magneto.env.example`). Leave `MAGNETO_TRANSMISSION_USERNAME` and
 `MAGNETO_TRANSMISSION_PASSWORD` blank unless you need to override the KeePassXC
 fields.
 
@@ -45,7 +45,7 @@ Defaults:
 - private URL: `https://torrents.snowbridge.internal`
 - public origin for form safety: `https://torrents.snowbridge.internal`
 - Transmission RPC: `http://127.0.0.1:9091/transmission/rpc`
-- Transmission auth: `auto-pass` profile `infra`, entry `magneto@transmission`
+- Transmission auth: `auto-pass` profile and entry from `config/magneto.env.local`
 - download directory: `/srv/snowbridge/share/torrents`
 
 ## Notifications
@@ -56,12 +56,12 @@ notifications through the sibling `shock-relay` repo. Configure these in
 
 ```bash
 MAGNETO_NOTIFY_ENABLED=1
-MAGNETO_SHOCK_RELAY_ROOT=/mnt/4tb-m2/git/util-repos/shock-relay
+MAGNETO_SHOCK_RELAY_ROOT=/path/to/shock-relay
 MAGNETO_NOTIFY_TAG=magneto/notify
 MAGNETO_NOTIFY_SIGNAL_TARGET=+15551234567
-MAGNETO_NOTIFY_SIGNAL_CONFIG=/mnt/4tb-m2/git/util-repos/shock-relay/services/signal-cli/config.local.yaml
+MAGNETO_NOTIFY_SIGNAL_CONFIG=/path/to/shock-relay/services/signal-cli/config.local.yaml
 MAGNETO_NOTIFY_EMAIL_TARGET=you@example.com
-MAGNETO_NOTIFY_EMAIL_CONFIG=/mnt/4tb-m2/git/util-repos/shock-relay/services/gmail-imap/config.local.yaml
+MAGNETO_NOTIFY_EMAIL_CONFIG=/path/to/shock-relay/services/gmail-imap/config.local.yaml
 ```
 
 Supported services are `signal`, `telegram`, `twilio`, `whatsapp`, `gmail`, and
