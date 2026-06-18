@@ -133,7 +133,7 @@ class ShockRelayNotifier:
         if route.config_path:
             cmd.extend(["--config", route.config_path])
         if self.config.tag and route.service == "signal":
-            cmd.extend(["--meta", f"tag: {self.config.tag}"])
+            cmd.extend(["--meta", f"cc-tag: {self.config.tag}"])
         if self.config.tag and route.service in {"gmail", "gmail-imap"}:
             cmd.extend(["--header", f"X-Magneto-Tag: {self.config.tag}"])
         return cmd

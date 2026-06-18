@@ -69,7 +69,7 @@ def test_shock_relay_notifier_sends_signal_message(dyno_proc, tmp_path):
         "--config",
         str(tmp_path / "config.local.yaml"),
         "--meta",
-        "tag: magneto/notify",
+        "cc-tag: magneto/notify",
     ]
 
 
