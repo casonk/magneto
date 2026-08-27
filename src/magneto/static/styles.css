@@ -32,7 +32,8 @@ body {
 
 button,
 textarea,
-input {
+input,
+select {
   font: inherit;
 }
 
@@ -132,6 +133,19 @@ button {
   gap: 10px;
 }
 
+.torrent-host-row {
+  display: grid;
+  gap: 7px;
+  margin-bottom: 12px;
+}
+
+.torrent-host-note {
+  margin: -3px 0 14px;
+  color: var(--muted);
+  font-size: 0.9rem;
+  line-height: 1.4;
+}
+
 label {
   color: var(--muted);
   font-size: 0.9rem;
@@ -139,7 +153,8 @@ label {
 }
 
 textarea,
-input[type="file"] {
+input[type="file"],
+select {
   width: 100%;
   border: 1px solid var(--line);
   border-radius: 8px;

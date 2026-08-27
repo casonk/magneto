@@ -32,6 +32,17 @@
       {% endif %}
 
       <section class="add-panel">
+        {% if torrent_hosts %}
+          <div class="torrent-host-row">
+            <label for="torrent_host">Transmission host</label>
+            <select id="torrent_host" data-torrent-host>
+              {% for host in torrent_hosts %}
+                <option value="{{ host.url }}" {% if host.current %}selected{% endif %}>{{ host.label }}{% if host.current %} (current){% endif %}</option>
+              {% endfor %}
+            </select>
+          </div>
+          <p class="torrent-host-note">Switching host opens that host’s own mTLS-protected Magneto. Add the torrent there so its local Transmission and download path are used.</p>
+        {% endif %}
         <form method="post" action="{{ url_for('add_torrent') }}" enctype="multipart/form-data">
           <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
           <label for="magnet">Magnet link</label>

@@ -1,4 +1,14 @@
 (() => {
+  const hostSelect = document.querySelector("[data-torrent-host]");
+  if (hostSelect) {
+    hostSelect.addEventListener("change", () => {
+      const target = hostSelect.value;
+      if (target && target !== window.location.href) {
+        window.location.assign(target);
+      }
+    });
+  }
+
   const list = document.querySelector("[data-torrent-list]");
   if (!list) {
     return;

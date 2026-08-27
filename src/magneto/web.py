@@ -66,6 +66,7 @@ def create_app(
             status_error=status_error,
             download_dir=app_config.download_dir,
             csrf_token=token,
+            torrent_hosts=app_config.torrent_hosts,
         )
 
     @app.get("/api/torrents")

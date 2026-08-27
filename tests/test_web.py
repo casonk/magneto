@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 
-from magneto.config import AppConfig
+from magneto.config import AppConfig, TorrentHost
 from magneto.web import create_app
 
 
@@ -103,6 +103,30 @@ def test_index_renders_mobile_controls(tmp_path):
     assert "No seed" in text
     assert str(tmp_path / "downloads") in text
     assert 'data-refresh-url="/torrents/fragment"' in text
+
+
+def test_index_renders_torrent_host_selector(tmp_path):
+    fake_client = FakeClient()
+    app = create_app(
+        AppConfig(
+            transmission_url="http://example/rpc",
+            download_dir=str(tmp_path / "downloads"),
+            secret_key="test-secret",
+            torrent_hosts=(
+                TorrentHost("air", "MacBook Air", "https://torrents.air.internal/", current=True),
+                TorrentHost("home", "Home server", "https://torrents.home.internal/"),
+            ),
+        ),
+        client=fake_client,
+    )
+
+    response = app.test_client().get("/")
+    text = response.get_data(as_text=True)
+
+    assert response.status_code == 200
+    assert "data-torrent-host" in text
+    assert 'value="https://torrents.air.internal/" selected' in text
+    assert "Home server" in text
 
 
 def test_torrent_fragment_renders_list_without_page_shell(tmp_path):
