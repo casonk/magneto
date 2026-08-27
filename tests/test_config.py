@@ -104,3 +104,31 @@ def test_from_env_reads_multi_route_notification_config(monkeypatch, tmp_path):
             str(tmp_path / "shock-relay/services/gmail-imap/config.local.yaml"),
         ),
     )
+
+
+def test_from_env_reads_rendered_torrent_hosts(monkeypatch, tmp_path):
+    hosts_file = tmp_path / "torrent-hosts.json"
+    hosts_file.write_text(
+        '{"hosts":[{"id":"air","label":"MacBook Air","url":"https://torrents.air.internal/","current":true},{"id":"home","label":"Home server","url":"https://torrents.home.internal/","current":false}]}\n',
+        encoding="utf-8",
+    )
+    monkeypatch.setenv("MAGNETO_TORRENT_HOSTS_FILE", str(hosts_file))
+
+    config = AppConfig.from_env()
+
+    assert [(host.id, host.label, host.current) for host in config.torrent_hosts] == [
+        ("air", "MacBook Air", True),
+        ("home", "Home server", False),
+    ]
+
+
+def test_from_env_rejects_duplicate_torrent_host_ids(monkeypatch, tmp_path):
+    hosts_file = tmp_path / "torrent-hosts.json"
+    hosts_file.write_text(
+        '{"hosts":[{"id":"air","label":"Air","url":"https://torrents.air.internal/"},{"id":"air","label":"Air again","url":"https://torrents.home.internal/"}]}\n',
+        encoding="utf-8",
+    )
+    monkeypatch.setenv("MAGNETO_TORRENT_HOSTS_FILE", str(hosts_file))
+
+    with pytest.raises(ConfigurationError, match="Duplicate torrent host id"):
+        AppConfig.from_env()
