@@ -2,16 +2,28 @@
 
 from __future__ import annotations
 
+import json
 import os
 import secrets
 from dataclasses import dataclass
 from pathlib import Path
+from urllib.parse import urlsplit
 
 from magneto.autopass import AutoPassCredentialError, resolve_auto_pass_credentials
 
 
 class ConfigurationError(RuntimeError):
     """Raised when magneto runtime configuration is invalid."""
+
+
+@dataclass(frozen=True)
+class TorrentHost:
+    """One approved Magneto endpoint, rendered from the private site registry."""
+
+    id: str
+    label: str
+    url: str
+    current: bool = False
 
 
 @dataclass(frozen=True)
@@ -34,6 +46,7 @@ class AppConfig:
     notify_routes: tuple[tuple[str, str, str | None], ...] = ()
     notify_tag: str | None = None
     no_seed_by_default: bool = False
+    torrent_hosts: tuple[TorrentHost, ...] = ()
 
     @classmethod
     def from_env(cls) -> AppConfig:
@@ -96,6 +109,7 @@ class AppConfig:
             notify_routes=notify_routes,
             notify_tag=os.environ.get("MAGNETO_NOTIFY_TAG") or None,
             no_seed_by_default=_truthy(os.environ.get("MAGNETO_NO_SEED_BY_DEFAULT")),
+            torrent_hosts=_torrent_hosts_from_env(),
         )
 
     @property
@@ -109,6 +123,64 @@ def _split_csv(value: str) -> tuple[str, ...]:
 
 def _truthy(value: str | None) -> bool:
     return str(value or "").strip().lower() in {"1", "true", "yes", "on"}
+
+
+def _torrent_hosts_from_env() -> tuple[TorrentHost, ...]:
+    raw_path = os.environ.get("MAGNETO_TORRENT_HOSTS_FILE", "").strip()
+    if not raw_path:
+        return ()
+    path = Path(raw_path).expanduser()
+    try:
+        raw = json.loads(path.read_text(encoding="utf-8"))
+    except OSError as exc:
+        raise ConfigurationError(f"Cannot read MAGNETO_TORRENT_HOSTS_FILE: {exc}") from exc
+    except json.JSONDecodeError as exc:
+        raise ConfigurationError(f"MAGNETO_TORRENT_HOSTS_FILE is not valid JSON: {exc}") from exc
+    if not isinstance(raw, dict) or not isinstance(raw.get("hosts"), list):
+        raise ConfigurationError("MAGNETO_TORRENT_HOSTS_FILE must contain a hosts array.")
+
+    hosts: list[TorrentHost] = []
+    ids: set[str] = set()
+    current_count = 0
+    for entry in raw["hosts"]:
+        if not isinstance(entry, dict):
+            raise ConfigurationError("Every torrent host entry must be an object.")
+        host_id = entry.get("id")
+        label = entry.get("label")
+        url = entry.get("url")
+        current = entry.get("current", False)
+        if not isinstance(host_id, str) or not host_id or len(host_id) > 64:
+            raise ConfigurationError(
+                "Torrent host id must be a non-empty string up to 64 characters."
+            )
+        if host_id in ids:
+            raise ConfigurationError(f"Duplicate torrent host id: {host_id!r}")
+        if not isinstance(label, str) or not label.strip() or len(label) > 80:
+            raise ConfigurationError(f"Torrent host {host_id!r} has an invalid label.")
+        if not isinstance(url, str) or not _valid_torrent_host_url(url):
+            raise ConfigurationError(f"Torrent host {host_id!r} has an invalid URL.")
+        if not isinstance(current, bool):
+            raise ConfigurationError(f"Torrent host {host_id!r} has an invalid current flag.")
+        ids.add(host_id)
+        current_count += int(current)
+        hosts.append(
+            TorrentHost(id=host_id, label=label.strip(), url=url.rstrip("/") + "/", current=current)
+        )
+    if current_count > 1:
+        raise ConfigurationError("MAGNETO_TORRENT_HOSTS_FILE may mark only one host as current.")
+    return tuple(hosts)
+
+
+def _valid_torrent_host_url(value: str) -> bool:
+    parsed = urlsplit(value)
+    return bool(
+        parsed.scheme == "https"
+        and parsed.hostname
+        and not parsed.username
+        and not parsed.password
+        and not parsed.query
+        and not parsed.fragment
+    )
 
 
 def _notify_routes_from_env() -> tuple[tuple[str, str, str | None], ...]:
