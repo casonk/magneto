@@ -75,10 +75,9 @@ resuming. Before final reporting for meaningful work, either add any durable
 lesson discovered or state why none was added. If the lesson generalizes beyond
 this repo, add it to `traction-control/LESSONSLEARNED.md` instead.
 
-Two tracked `pyreverse` scratch diagrams, `classes_magneto.puml` and
-`packages_magneto.puml`, still live at the repo root; they should be normalized
-into `docs/diagrams/python-{classes,packages}.puml` via `archility render` or
-removed. See `BACKLOG.md`.
+Keep pyreverse architecture sources under
+`docs/diagrams/python-{classes,packages}.puml`. The root-level pyreverse output
+names are ignored transient files and must not be committed.
 
 ## Portfolio Standards Reference
 
