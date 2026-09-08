@@ -5,6 +5,7 @@ class "AppConfig" as src.magneto.config.AppConfig {
   download_dir : str
   download_path : Path
   max_torrent_upload_bytes : int
+  no_seed_by_default : bool
   notify_config_path : str | None
   notify_enabled : bool
   notify_routes : tuple[tuple[str, str, str | None], ...]
@@ -17,6 +18,7 @@ class "AppConfig" as src.magneto.config.AppConfig {
   public_origin : str | None
   request_timeout : float
   secret_key : str
+  torrent_hosts : tuple[TorrentHost, ...]
   transmission_url : str
   username : str | None
   from_env() -> AppConfig
@@ -64,6 +66,12 @@ class "ShockRelayNotifier" as src.magneto.notifications.ShockRelayNotifier {
 }
 class "TorrentClient" as src.magneto.notifications.TorrentClient {
   list_torrents() -> list[dict]
+}
+class "TorrentHost" as src.magneto.config.TorrentHost {
+  current : bool
+  id : str
+  label : str
+  url : str
 }
 class "TorrentNotificationMonitor" as src.magneto.notifications.TorrentNotificationMonitor {
   client
