@@ -6,22 +6,19 @@
 
 ## Public Repositories
 
-<!-- External repos this project depends on, forks, or integrates with:
-- https://github.com/org/repo — description of usage
--->
+- https://github.com/transmission/transmission — Transmission daemon controlled through its local RPC interface
 
 ## Public Datasets and APIs
 
-<!-- Publicly accessible data sources, REST APIs, or external feeds consumed here:
-- https://example.com/dataset — description of usage
--->
+- No public data feed is consumed; Magneto sends authenticated JSON-RPC requests to a local Transmission daemon.
 
 ## Documentation and Specifications
 
-<!-- Reference docs, RFCs, standards, or upstream project documentation:
-- https://docs.example.com — description
--->
+- https://github.com/transmission/transmission/blob/main/docs/rpc-spec.md — Transmission RPC protocol used by `TransmissionClient`
+- https://flask.palletsprojects.com/ — Flask web UI framework reference
+- https://requests.readthedocs.io/ — Requests HTTP client reference used by the Transmission RPC client
+- https://wiki.nftables.org/ — nftables reference for the Transmission VPN egress guard
 
 ## Notes
 
-<!-- Any context about how these public references are used or versioned -->
+- Transmission credentials, RPC addresses, download paths, and private ingress details remain local-only.
