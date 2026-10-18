@@ -163,6 +163,12 @@ class TransmissionClient:
     def reannounce(self, torrent_id: int) -> None:
         self.call("torrent-reannounce", {"ids": [torrent_id]})
 
+    def set_location(self, torrent_id: int, location: str, *, move: bool) -> None:
+        self.call(
+            "torrent-set-location",
+            {"ids": [torrent_id], "location": location, "move": move},
+        )
+
     def restart(self, torrent_id: int) -> None:
         self.call("torrent-stop", {"ids": [torrent_id]})
         self.call("torrent-start", {"ids": [torrent_id]})

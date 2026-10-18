@@ -9,6 +9,7 @@ import sys
 from pathlib import Path
 
 from magneto.config import AppConfig, ConfigurationError
+from magneto.library import file_completed
 from magneto.notifications import NotificationError, build_monitor
 from magneto.recovery import reannounce_stalled
 from magneto.transmission import TransmissionClient, TransmissionError
@@ -91,14 +92,18 @@ def _build_parser() -> argparse.ArgumentParser:
     return parser
 
 
-def _recover_stalled(app_config: AppConfig, *, dry_run: bool) -> None:
-    """Reannounce torrents stuck in tracker backoff; never block notifications."""
-    client = TransmissionClient(
+def _transmission_client(app_config: AppConfig) -> TransmissionClient:
+    return TransmissionClient(
         app_config.transmission_url,
         username=app_config.username,
         password=app_config.password,
         timeout=app_config.request_timeout,
     )
+
+
+def _recover_stalled(app_config: AppConfig, *, dry_run: bool) -> None:
+    """Reannounce torrents stuck in tracker backoff; never block notifications."""
+    client = _transmission_client(app_config)
     try:
         result = reannounce_stalled(client, vpn_interface=app_config.vpn_interface, dry_run=dry_run)
     except TransmissionError as exc:
@@ -109,6 +114,25 @@ def _recover_stalled(app_config: AppConfig, *, dry_run: bool) -> None:
     elif result.reannounced:
         verb = "would reannounce" if dry_run else "reannounced"
         print(f"{verb} {len(result.reannounced)} stalled: {', '.join(result.reannounced)}")
+
+
+def _file_completed(app_config: AppConfig, library_dir: str, *, dry_run: bool) -> None:
+    """Move finished downloads into the library; never fail the notify run."""
+    try:
+        result = file_completed(
+            _transmission_client(app_config),
+            download_dir=app_config.download_dir,
+            library_dir=library_dir,
+            dry_run=dry_run,
+        )
+    except TransmissionError as exc:
+        print(f"library filing failed: {exc}", file=sys.stderr)
+        return
+    if result.moved:
+        verb = "would move" if dry_run else "moved"
+        print(f"{verb} {len(result.moved)} to {library_dir}: {', '.join(result.moved)}")
+    if result.skipped:
+        print(f"already in {library_dir}, left in place: {', '.join(result.skipped)}")
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -146,6 +170,11 @@ def main(argv: list[str] | None = None) -> int:
             print("notifications disabled")
         else:
             print(f"notifications sent={result.sent} skipped={result.skipped}")
+        # File after notifying so completion messages go out before the move.
+        if app_config.library_dir:
+            _file_completed(
+                app_config, app_config.library_dir, dry_run=getattr(args, "dry_run", False)
+            )
         return 0
 
     parser.error(f"unknown command: {args.command}")

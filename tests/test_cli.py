@@ -5,6 +5,7 @@ from dataclasses import dataclass
 
 from magneto.cli import main
 from magneto.config import AppConfig
+from magneto.library import FilingResult
 from magneto.notifications import NotificationResult
 from magneto.recovery import RecoveryResult
 
@@ -101,3 +102,40 @@ def test_notify_cli_reports_recovery_skip_when_vpn_down(dyno_cli, monkeypatch):
 
     assert result.exit_code == 0
     assert "stalled torrent recovery skipped: nordlynx is down" in result.stdout
+
+
+def test_notify_cli_files_completed_downloads_after_notifying(dyno_cli, monkeypatch):
+    calls = []
+
+    def fake_file_completed(client, *, download_dir, library_dir, dry_run):
+        calls.append((download_dir, library_dir, dry_run))
+        return FilingResult(moved=("Napoleon Dynamite (2004) [1080p]",), skipped=("Old",))
+
+    monkeypatch.setattr(
+        "magneto.cli.AppConfig.from_env", lambda: _config(library_dir="/srv/media/library")
+    )
+    monkeypatch.setattr("magneto.cli.file_completed", fake_file_completed)
+    monkeypatch.setattr("magneto.cli.build_monitor", lambda _config: FakeMonitor())
+
+    result = dyno_cli(main, ["notify", "--dry-run"])
+
+    assert result.exit_code == 0
+    assert calls == [("/tmp/torrents", "/srv/media/library", True)]
+    lines = result.stdout.splitlines()
+    assert lines.index("notifications sent=0 skipped=1") < lines.index(
+        "would move 1 to /srv/media/library: Napoleon Dynamite (2004) [1080p]"
+    )
+    assert "already in /srv/media/library, left in place: Old" in result.stdout
+
+
+def test_notify_cli_skips_filing_without_library_dir(dyno_cli, monkeypatch):
+    monkeypatch.setattr("magneto.cli.AppConfig.from_env", lambda: _config())
+    monkeypatch.setattr(
+        "magneto.cli.file_completed",
+        lambda *_a, **_k: (_ for _ in ()).throw(AssertionError("should not file")),
+    )
+    monkeypatch.setattr("magneto.cli.build_monitor", lambda _config: FakeMonitor())
+
+    result = dyno_cli(main, ["notify"])
+
+    assert result.exit_code == 0
