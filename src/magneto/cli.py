@@ -5,10 +5,13 @@ from __future__ import annotations
 import argparse
 import ipaddress
 import os
+import sys
 from pathlib import Path
 
 from magneto.config import AppConfig, ConfigurationError
 from magneto.notifications import NotificationError, build_monitor
+from magneto.recovery import reannounce_stalled
+from magneto.transmission import TransmissionClient, TransmissionError
 from magneto.web import create_app
 
 
@@ -88,6 +91,26 @@ def _build_parser() -> argparse.ArgumentParser:
     return parser
 
 
+def _recover_stalled(app_config: AppConfig, *, dry_run: bool) -> None:
+    """Reannounce torrents stuck in tracker backoff; never block notifications."""
+    client = TransmissionClient(
+        app_config.transmission_url,
+        username=app_config.username,
+        password=app_config.password,
+        timeout=app_config.request_timeout,
+    )
+    try:
+        result = reannounce_stalled(client, vpn_interface=app_config.vpn_interface, dry_run=dry_run)
+    except TransmissionError as exc:
+        print(f"stalled torrent recovery failed: {exc}", file=sys.stderr)
+        return
+    if not result.vpn_up:
+        print(f"stalled torrent recovery skipped: {app_config.vpn_interface} is down")
+    elif result.reannounced:
+        verb = "would reannounce" if dry_run else "reannounced"
+        print(f"{verb} {len(result.reannounced)} stalled: {', '.join(result.reannounced)}")
+
+
 def main(argv: list[str] | None = None) -> int:
     _load_default_env()
     parser = _build_parser()
@@ -108,6 +131,11 @@ def main(argv: list[str] | None = None) -> int:
     if args.command == "notify":
         try:
             app_config = AppConfig.from_env()
+        except ConfigurationError as exc:
+            raise SystemExit(str(exc)) from exc
+        if app_config.reannounce_stalled:
+            _recover_stalled(app_config, dry_run=getattr(args, "dry_run", False))
+        try:
             result = build_monitor(app_config).run_once(
                 dry_run=getattr(args, "dry_run", False),
                 prime=getattr(args, "prime", False),

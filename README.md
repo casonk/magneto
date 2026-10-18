@@ -172,6 +172,17 @@ The diagnostic temporarily enables kernel logging for rejected Transmission
 packets, restarts the daemon, requests a tracker reannounce, prints the torrent
 tracker state and nft counters, then restores the guard without reject logging.
 
+### Recovering torrents after a VPN outage
+
+While the tunnel is down the guard rejects every tracker announce, and
+Transmission backs off for up to two hours, so torrents stay idle long after
+the VPN reconnects. Each `magneto notify` run (every 5 minutes with the user
+timer) reannounces downloading torrents that have no peers, only failed tracker
+announces, and a next announce more than 5 minutes away, but only while
+`MAGNETO_VPN_INTERFACE` (default `nordlynx`) exists. Set
+`MAGNETO_REANNOUNCE_STALLED=0` to turn this off. `magneto notify --dry-run`
+lists what would be reannounced.
+
 ## wiring-harness
 
 The local private-site registry should contain:

@@ -46,6 +46,8 @@ class AppConfig:
     notify_routes: tuple[tuple[str, str, str | None], ...] = ()
     notify_tag: str | None = None
     no_seed_by_default: bool = False
+    reannounce_stalled: bool = True
+    vpn_interface: str = "nordlynx"
     torrent_hosts: tuple[TorrentHost, ...] = ()
 
     @classmethod
@@ -109,6 +111,8 @@ class AppConfig:
             notify_routes=notify_routes,
             notify_tag=os.environ.get("MAGNETO_NOTIFY_TAG") or None,
             no_seed_by_default=_truthy(os.environ.get("MAGNETO_NO_SEED_BY_DEFAULT")),
+            reannounce_stalled=_truthy(os.environ.get("MAGNETO_REANNOUNCE_STALLED", "1")),
+            vpn_interface=os.environ.get("MAGNETO_VPN_INTERFACE", "nordlynx"),
             torrent_hosts=_torrent_hosts_from_env(),
         )
 
