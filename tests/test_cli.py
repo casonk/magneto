@@ -4,7 +4,9 @@ import os
 from dataclasses import dataclass
 
 from magneto.cli import main
+from magneto.config import AppConfig
 from magneto.notifications import NotificationResult
+from magneto.recovery import RecoveryResult
 
 
 @dataclass
@@ -18,9 +20,20 @@ class FakeMonitor:
         return NotificationResult(sent=0, skipped=1)
 
 
+def _config(**overrides) -> AppConfig:
+    values = {
+        "transmission_url": "http://127.0.0.1:9091/transmission/rpc",
+        "download_dir": "/tmp/torrents",
+        "secret_key": "test",
+        "reannounce_stalled": False,
+    }
+    values.update(overrides)
+    return AppConfig(**values)
+
+
 def test_notify_cli_uses_monitor(dyno_cli, monkeypatch):
     monitor = FakeMonitor()
-    monkeypatch.setattr("magneto.cli.AppConfig.from_env", lambda: object())
+    monkeypatch.setattr("magneto.cli.AppConfig.from_env", lambda: _config())
     monkeypatch.setattr("magneto.cli.build_monitor", lambda _config: monitor)
 
     result = dyno_cli(main, ["notify", "--dry-run", "--prime"])
@@ -44,7 +57,7 @@ def test_cli_loads_env_file_before_building_config(dyno_cli, monkeypatch, tmp_pa
     def fake_from_env():
         assert os.environ["MAGNETO_NOTIFY_SIGNAL_TARGET"] == "+15551234567"
         assert os.environ["MAGNETO_NOTIFY_TAG"] == "magneto/notify"
-        return object()
+        return _config()
 
     monkeypatch.setenv("MAGNETO_ENV_FILE", str(env_file))
     monkeypatch.delenv("MAGNETO_NOTIFY_SIGNAL_TARGET", raising=False)
@@ -56,3 +69,35 @@ def test_cli_loads_env_file_before_building_config(dyno_cli, monkeypatch, tmp_pa
 
     assert result.exit_code == 0
     assert "notifications sent=0 skipped=1" in result.stdout
+
+
+def test_notify_cli_reannounces_stalled_before_notifying(dyno_cli, monkeypatch):
+    calls = []
+
+    def fake_reannounce(client, *, vpn_interface, dry_run):
+        calls.append((vpn_interface, dry_run))
+        return RecoveryResult(vpn_up=True, reannounced=("Napoleon Dynamite",))
+
+    monkeypatch.setattr("magneto.cli.AppConfig.from_env", lambda: _config(reannounce_stalled=True))
+    monkeypatch.setattr("magneto.cli.reannounce_stalled", fake_reannounce)
+    monkeypatch.setattr("magneto.cli.build_monitor", lambda _config: FakeMonitor())
+
+    result = dyno_cli(main, ["notify", "--dry-run"])
+
+    assert result.exit_code == 0
+    assert calls == [("nordlynx", True)]
+    assert "would reannounce 1 stalled: Napoleon Dynamite" in result.stdout
+    assert "notifications sent=0 skipped=1" in result.stdout
+
+
+def test_notify_cli_reports_recovery_skip_when_vpn_down(dyno_cli, monkeypatch):
+    monkeypatch.setattr("magneto.cli.AppConfig.from_env", lambda: _config(reannounce_stalled=True))
+    monkeypatch.setattr(
+        "magneto.cli.reannounce_stalled", lambda *_a, **_k: RecoveryResult(vpn_up=False)
+    )
+    monkeypatch.setattr("magneto.cli.build_monitor", lambda _config: FakeMonitor())
+
+    result = dyno_cli(main, ["notify"])
+
+    assert result.exit_code == 0
+    assert "stalled torrent recovery skipped: nordlynx is down" in result.stdout
