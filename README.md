@@ -183,6 +183,24 @@ announces, and a next announce more than 5 minutes away, but only while
 `MAGNETO_REANNOUNCE_STALLED=0` to turn this off. `magneto notify --dry-run`
 lists what would be reannounced.
 
+### Moving finished downloads into the library
+
+Set `MAGNETO_LIBRARY_DIR` (for example `/srv/media/library`) and each
+`magneto notify` run, after sending notifications, asks Transmission to move
+every complete torrent still in `MAGNETO_DOWNLOAD_DIR` into that directory
+(`torrent-set-location` with `move`). Transmission moves the data itself, so
+the move works across filesystems and the torrent can keep seeding from its
+new location. A torrent whose name already exists in the library is left in
+place and reported. Leave the variable blank to disable this.
+
+The Transmission daemon user must be able to write the library directory. If
+the library is owned by another account, grant it with an ACL, including a
+default entry so the owner can still manage what Transmission creates:
+
+```bash
+setfacl -m u:transmission:rwx,d:u:transmission:rwx,d:u:"$(id -un)":rwx /srv/media/library
+```
+
 ## wiring-harness
 
 The local private-site registry should contain:

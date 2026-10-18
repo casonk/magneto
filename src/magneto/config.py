@@ -48,6 +48,7 @@ class AppConfig:
     no_seed_by_default: bool = False
     reannounce_stalled: bool = True
     vpn_interface: str = "nordlynx"
+    library_dir: str | None = None
     torrent_hosts: tuple[TorrentHost, ...] = ()
 
     @classmethod
@@ -113,6 +114,7 @@ class AppConfig:
             no_seed_by_default=_truthy(os.environ.get("MAGNETO_NO_SEED_BY_DEFAULT")),
             reannounce_stalled=_truthy(os.environ.get("MAGNETO_REANNOUNCE_STALLED", "1")),
             vpn_interface=os.environ.get("MAGNETO_VPN_INTERFACE", "nordlynx"),
+            library_dir=os.environ.get("MAGNETO_LIBRARY_DIR") or None,
             torrent_hosts=_torrent_hosts_from_env(),
         )
 
