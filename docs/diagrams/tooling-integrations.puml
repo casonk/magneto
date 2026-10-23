@@ -1,5 +1,5 @@
 @startuml
-title magneto Tooling Integrations
+title checkout Tooling Integrations
 left to right direction
 skinparam shadowing false
 skinparam defaultFontName Monospace
@@ -11,12 +11,11 @@ rectangle "scripts/apply_host_setup.sh\n9 detected tools" as source_scripts_appl
 rectangle "scripts/apply_magneto_stack.sh\n5 detected tools" as source_scripts_apply_magneto_stack_sh #E0F2FE
 rectangle "scripts/apply_transmission_vpn_guard.sh\n1 detected tool" as source_scripts_apply_transmission_vpn_guard_sh #E0F2FE
 rectangle "scripts/diagnose_transmission_vpn.sh\n9 detected tools" as source_scripts_diagnose_transmission_vpn_sh #E0F2FE
-rectangle "scripts/install_transmission_daemon_backend.sh\n11 detected tools" as source_scripts_install_transmission_daemon_backend_sh #E0F2FE
+rectangle "scripts/install_transmission_daemon_backend.sh\n12 detected tools" as source_scripts_install_transmission_daemon_backend_sh #E0F2FE
 rectangle "scripts/install_transmission_vpn_guard.sh\n5 detected tools" as source_scripts_install_transmission_vpn_guard_sh #E0F2FE
 rectangle "scripts/install_web_service.sh\n7 detected tools" as source_scripts_install_web_service_sh #E0F2FE
-rectangle "scripts/run_tachometer_profile.sh\n6 detected tools" as source_scripts_run_tachometer_profile_sh #E0F2FE
+rectangle "scripts/run_tachometer_profile.sh\n1 detected tool" as source_scripts_run_tachometer_profile_sh #E0F2FE
 rectangle "scripts/transmission_vpn_guard.sh\n5 detected tools" as source_scripts_transmission_vpn_guard_sh #E0F2FE
-cloud "agent-utilization" as tool_agent_utilization #FEF3C7
 cloud "awk" as tool_awk #FEF3C7
 cloud "bash" as tool_bash #FEF3C7
 cloud "casonk/.github/.github/workflows/python-ci.yml" as tool_casonk_github_github_workflows_python_ci_yml #FEF3C7
@@ -29,8 +28,6 @@ cloud "curl" as tool_curl #FEF3C7
 cloud "cut" as tool_cut #FEF3C7
 cloud "get" as tool_get #FEF3C7
 cloud "grep" as tool_grep #FEF3C7
-cloud "host-snapshot" as tool_host_snapshot #FEF3C7
-cloud "host-summarize" as tool_host_summarize #FEF3C7
 cloud "id" as tool_id #FEF3C7
 cloud "ip" as tool_ip #FEF3C7
 cloud "mapfile" as tool_mapfile #FEF3C7
@@ -38,13 +35,12 @@ cloud "mkdir" as tool_mkdir #FEF3C7
 cloud "nft" as tool_nft #FEF3C7
 cloud "nordvpn" as tool_nordvpn #FEF3C7
 cloud "pip" as tool_pip #FEF3C7
+cloud "pkill" as tool_pkill #FEF3C7
 cloud "rm" as tool_rm #FEF3C7
-cloud "run" as tool_run #FEF3C7
 cloud "seconds" as tool_seconds #FEF3C7
 cloud "sleep" as tool_sleep #FEF3C7
 cloud "sort" as tool_sort #FEF3C7
 cloud "ss" as tool_ss #FEF3C7
-cloud "summarize" as tool_summarize #FEF3C7
 cloud "systemctl" as tool_systemctl #FEF3C7
 cloud "tachometer" as tool_tachometer #FEF3C7
 cloud "venv" as tool_venv #FEF3C7
@@ -82,6 +78,7 @@ source_scripts_install_transmission_daemon_backend_sh --> tool_cut
 source_scripts_install_transmission_daemon_backend_sh --> tool_get
 source_scripts_install_transmission_daemon_backend_sh --> tool_grep
 source_scripts_install_transmission_daemon_backend_sh --> tool_mapfile
+source_scripts_install_transmission_daemon_backend_sh --> tool_pkill
 source_scripts_install_transmission_daemon_backend_sh --> tool_rm
 source_scripts_install_transmission_daemon_backend_sh --> tool_sleep
 source_scripts_install_transmission_daemon_backend_sh --> tool_sort
@@ -98,11 +95,6 @@ source_scripts_install_web_service_sh --> tool_mkdir
 source_scripts_install_web_service_sh --> tool_pip
 source_scripts_install_web_service_sh --> tool_systemctl
 source_scripts_install_web_service_sh --> tool_venv
-source_scripts_run_tachometer_profile_sh --> tool_agent_utilization
-source_scripts_run_tachometer_profile_sh --> tool_host_snapshot
-source_scripts_run_tachometer_profile_sh --> tool_host_summarize
-source_scripts_run_tachometer_profile_sh --> tool_run
-source_scripts_run_tachometer_profile_sh --> tool_summarize
 source_scripts_run_tachometer_profile_sh --> tool_tachometer
 source_scripts_transmission_vpn_guard_sh --> tool_cat
 source_scripts_transmission_vpn_guard_sh --> tool_id
@@ -111,6 +103,6 @@ source_scripts_transmission_vpn_guard_sh --> tool_rm
 source_scripts_transmission_vpn_guard_sh --> tool_yes
 note as toolingGraphSummary
 Scanned 11 tooling entrypoints.
-Detected 33 third-party tools.
+Detected 29 third-party tools.
 end note
 @enduml
