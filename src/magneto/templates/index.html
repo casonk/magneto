@@ -27,10 +27,6 @@
         {% endif %}
       {% endwith %}
 
-      {% if status_error %}
-        <section class="message error">{{ status_error }}</section>
-      {% endif %}
-
       <section class="add-panel">
         {% if torrent_hosts %}
           <div class="torrent-host-row">

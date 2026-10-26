@@ -19,6 +19,7 @@ def test_shell_scripts_parse():
             str(REPO_ROOT / "scripts" / "run_tachometer_profile.sh"),
             str(REPO_ROOT / "scripts" / "apply_host_setup.sh"),
             str(REPO_ROOT / "scripts" / "install_transmission_daemon_backend.sh"),
+            str(REPO_ROOT / "scripts" / "install_transmission_restart_permission.sh"),
         ],
         capture_output=True,
         text=True,

@@ -3,6 +3,8 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 
 from magneto.config import AppConfig, TorrentHost
+from magneto.service import ServiceRestartError
+from magneto.transmission import TransmissionError
 from magneto.web import create_app
 
 
@@ -37,6 +39,10 @@ class FakeClient:
                 "errorString": "",
             }
         ]
+
+    def call(self, method):
+        self.calls.append(("call", method))
+        return {}
 
     def add_magnet(self, magnet, download_dir, *, no_seed=False):
         self.calls.append(("add_magnet", magnet, download_dir))
@@ -140,6 +146,89 @@ def test_torrent_fragment_renders_list_without_page_shell(tmp_path):
     assert response.headers["Cache-Control"] == "no-store"
     assert "ubuntu.iso" in text
     assert "<main" not in text
+
+
+def test_failed_refresh_shows_restart_control(tmp_path):
+    class UnavailableClient(FakeClient):
+        def list_torrents(self):
+            raise TransmissionError("RPC timed out")
+
+    app = _app(tmp_path, UnavailableClient())
+    response = app.test_client().get("/torrents/fragment")
+    text = response.get_data(as_text=True)
+
+    assert response.status_code == 502
+    assert "RPC timed out" in text
+    assert 'action="/transmission/restart"' in text
+    assert 'name="csrf_token"' in text
+
+
+def test_transmission_health_checks_rpc(tmp_path):
+    fake_client = FakeClient()
+    app = _app(tmp_path, fake_client)
+
+    response = app.test_client().get("/healthz/transmission")
+
+    assert response.status_code == 200
+    assert fake_client.calls == [("call", "session-get")]
+
+
+def test_transmission_health_reports_rpc_failure(tmp_path):
+    class UnavailableClient(FakeClient):
+        def call(self, method):
+            raise TransmissionError("RPC timed out")
+
+    app = _app(tmp_path, UnavailableClient())
+
+    response = app.test_client().get("/healthz/transmission")
+
+    assert response.status_code == 503
+    assert response.json == {"ok": False, "error": "RPC timed out"}
+
+
+def test_restart_service_requires_csrf_and_calls_fixed_runner(tmp_path):
+    calls = []
+    app = create_app(
+        AppConfig("http://example/rpc", str(tmp_path / "downloads"), "test-secret"),
+        client=FakeClient(),
+        restart_service=lambda: calls.append("restart"),
+    )
+    client = app.test_client()
+
+    denied = client.post("/transmission/restart", headers={"Origin": "http://localhost"})
+    token = _csrf(client)
+    accepted = client.post(
+        "/transmission/restart",
+        data={"csrf_token": token},
+        headers={"Origin": "http://localhost"},
+    )
+
+    assert denied.status_code == 403
+    assert accepted.status_code == 302
+    assert calls == ["restart"]
+
+
+def test_restart_service_error_is_shown(tmp_path):
+    def reject():
+        raise ServiceRestartError("Restart permission missing")
+
+    app = create_app(
+        AppConfig("http://example/rpc", str(tmp_path / "downloads"), "test-secret"),
+        client=FakeClient(),
+        restart_service=reject,
+    )
+    client = app.test_client()
+    token = _csrf(client)
+
+    response = client.post(
+        "/transmission/restart",
+        data={"csrf_token": token},
+        headers={"Origin": "http://localhost"},
+        follow_redirects=True,
+    )
+
+    assert response.status_code == 200
+    assert "Restart permission missing" in response.get_data(as_text=True)
 
 
 def test_add_magnet_uses_configured_download_dir(tmp_path):

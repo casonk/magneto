@@ -4,6 +4,7 @@ class "AppConfig" as src.magneto.config.AppConfig {
   allowed_origins : tuple[str, ...]
   download_dir : str
   download_path : Path
+  library_dir : str | None
   max_torrent_upload_bytes : int
   no_seed_by_default : bool
   notify_config_path : str | None
@@ -16,16 +17,26 @@ class "AppConfig" as src.magneto.config.AppConfig {
   notify_target : str | None
   password : str | None
   public_origin : str | None
+  reannounce_stalled : bool
   request_timeout : float
   secret_key : str
   torrent_hosts : tuple[TorrentHost, ...]
   transmission_url : str
   username : str | None
+  vpn_interface : str
   from_env() -> AppConfig
 }
 class "<color:red>AutoPassCredentialError</color>" as src.magneto.autopass.AutoPassCredentialError {
 }
 class "<color:red>ConfigurationError</color>" as src.magneto.config.ConfigurationError {
+}
+class "FilingResult" as src.magneto.library.FilingResult {
+  moved : tuple[str, ...]
+  skipped : tuple[str, ...]
+}
+class "LibraryClient" as src.magneto.library.LibraryClient {
+  list_torrents() -> list[dict[str, Any]]
+  set_location(torrent_id: int, location: str) -> None
 }
 class "NotificationConfig" as src.magneto.notifications.NotificationConfig {
   config_path : str | None
@@ -50,6 +61,14 @@ class "NotificationRoute" as src.magneto.notifications.NotificationRoute {
   config_path : str | None
   service : str
   target : str
+}
+class "RecoveryClient" as src.magneto.recovery.RecoveryClient {
+  list_torrents() -> list[dict[str, Any]]
+  reannounce(torrent_id: int) -> None
+}
+class "RecoveryResult" as src.magneto.recovery.RecoveryResult {
+  reannounced : tuple[str, ...]
+  vpn_up : bool
 }
 class "ResponseLike" as src.magneto.transmission.ResponseLike {
   headers : dict[str, str]
@@ -96,6 +115,7 @@ class "TransmissionClient" as src.magneto.transmission.TransmissionClient {
   remove(torrent_id: int) -> None
   restart(torrent_id: int) -> None
   resume(torrent_id: int) -> None
+  set_location(torrent_id: int, location: str) -> None
   set_seed_ratio(torrent_id: int) -> None
   set_upload_limit(torrent_id: int) -> None
 }

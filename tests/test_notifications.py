@@ -13,6 +13,7 @@ from magneto.notifications import (
     ShockRelayNotifier,
     TorrentNotificationMonitor,
 )
+from magneto.transmission import TransmissionError
 
 
 @dataclass
@@ -21,6 +22,16 @@ class FakeTorrentClient:
 
     def list_torrents(self):
         return self.torrents
+
+
+@dataclass
+class FlappingTorrentClient:
+    available: bool = False
+
+    def list_torrents(self):
+        if not self.available:
+            raise TransmissionError("RPC timed out")
+        return []
 
 
 def _shock_root(tmp_path: Path, service: str = "signal-cli", script: str = "send_message.py"):
@@ -159,6 +170,49 @@ def test_monitor_sends_completion_once_and_records_state(dyno_proc, tmp_path):
     assert recorder.call_count == 1
     state = json.loads(config.state_file.read_text(encoding="utf-8"))
     assert state["torrents"]["abc123"]["complete"] == "123"
+
+
+def test_monitor_notifies_once_on_outage_and_once_on_recovery(dyno_proc, tmp_path):
+    config = _config(tmp_path)
+    client = FlappingTorrentClient()
+    monitor = TorrentNotificationMonitor(
+        client=client,
+        notifier=ShockRelayNotifier(config),
+        state_file=config.state_file,
+    )
+    recorder = dyno_proc()
+
+    with SubprocessPatch(recorder, target="magneto.notifications.subprocess.run"):
+        first = monitor.run_once()
+        repeated = monitor.run_once()
+        client.available = True
+        recovered = monitor.run_once()
+        healthy = monitor.run_once()
+
+    assert [result.sent for result in (first, repeated, recovered, healthy)] == [1, 0, 1, 0]
+    assert recorder.call_count == 2
+    assert "Transmission unavailable" in recorder.commands()[0][3]
+    assert "Transmission recovered" in recorder.commands()[1][3]
+    state = json.loads(config.state_file.read_text(encoding="utf-8"))
+    assert state["transmission_unavailable"] is False
+
+
+def test_monitor_dry_run_does_not_consume_outage_alert(dyno_proc, tmp_path):
+    config = _config(tmp_path)
+    monitor = TorrentNotificationMonitor(
+        client=FlappingTorrentClient(),
+        notifier=ShockRelayNotifier(config),
+        state_file=config.state_file,
+    )
+    recorder = dyno_proc()
+
+    with SubprocessPatch(recorder, target="magneto.notifications.subprocess.run"):
+        preview = monitor.run_once(dry_run=True)
+        sent = monitor.run_once()
+
+    assert preview.skipped == 1
+    assert sent.sent == 1
+    assert recorder.call_count == 1
 
 
 def test_monitor_sends_error_when_error_message_changes(dyno_proc, tmp_path):
