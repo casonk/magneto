@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 import os
+import socket
 import subprocess
 import sys
 from dataclasses import dataclass
@@ -11,7 +12,7 @@ from pathlib import Path
 from typing import Protocol
 
 from magneto.config import AppConfig
-from magneto.transmission import TransmissionClient
+from magneto.transmission import TransmissionClient, TransmissionError
 
 SERVICE_SCRIPTS = {
     "signal": "services/signal-cli/send_message.py",
@@ -161,7 +162,37 @@ class TorrentNotificationMonitor:
         skipped = 0
         changed = False
 
-        for torrent in self.client.list_torrents():
+        try:
+            torrents = self.client.list_torrents()
+        except TransmissionError:
+            if not state.get("transmission_unavailable"):
+                subject = f"Magneto: Transmission unavailable on {socket.gethostname()}"
+                body = "Transmission RPC did not respond. Open Magneto to request a restart."
+                if dry_run:
+                    print(f"would notify: {subject}")
+                    skipped += 1
+                else:
+                    if not prime:
+                        sent += self.notifier.send_all(subject, body)
+                    state["transmission_unavailable"] = True
+                    _save_state(self.state_file, state)
+                    skipped += int(prime)
+            return NotificationResult(sent=sent, skipped=skipped)
+
+        if state.get("transmission_unavailable"):
+            subject = f"Magneto: Transmission recovered on {socket.gethostname()}"
+            body = "Transmission RPC is responding again."
+            if dry_run:
+                print(f"would notify: {subject}")
+                skipped += 1
+            else:
+                if not prime:
+                    sent += self.notifier.send_all(subject, body)
+                state["transmission_unavailable"] = False
+                changed = True
+                skipped += int(prime)
+
+        for torrent in torrents:
             key = _torrent_key(torrent)
             torrent_state = state.setdefault("torrents", {}).setdefault(key, {})
             events = _events_for_torrent(torrent, torrent_state)

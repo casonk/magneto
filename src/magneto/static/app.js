@@ -39,11 +39,8 @@
         credentials: "same-origin",
         headers: { "X-Requested-With": "fetch" },
       });
-      if (!response.ok) {
-        throw new Error(`refresh failed: ${response.status}`);
-      }
       list.innerHTML = await response.text();
-      list.classList.remove("is-stale");
+      list.classList.toggle("is-stale", !response.ok);
     } catch (_error) {
       list.classList.add("is-stale");
     } finally {

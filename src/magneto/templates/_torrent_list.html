@@ -1,4 +1,6 @@
-{% if torrents %}
+{% if status_error %}
+  {% include "_transmission_error.html" %}
+{% elif torrents %}
   {% for torrent in torrents %}
     <article class="torrent">
       <div class="torrent-head">

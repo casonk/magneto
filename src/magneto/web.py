@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import ipaddress
 import secrets
+from collections.abc import Callable
 from http import HTTPStatus
 from urllib.parse import urlparse
 
@@ -18,15 +19,16 @@ from flask import (
     session,
     url_for,
 )
-from markupsafe import escape
 
 from magneto.config import AppConfig
+from magneto.service import ServiceRestartError, restart_transmission_service
 from magneto.transmission import TransmissionClient, TransmissionError
 
 
 def create_app(
     config: AppConfig | None = None,
     client: TransmissionClient | None = None,
+    restart_service: Callable[[], None] = restart_transmission_service,
 ) -> Flask:
     app_config = config or AppConfig.from_env()
     app = Flask(__name__)
@@ -39,6 +41,7 @@ def create_app(
         password=app_config.password,
         timeout=app_config.request_timeout,
     )
+    app.config["MAGNETO_RESTART_SERVICE"] = restart_service
 
     @app.before_request
     def _protect_state_changing_requests() -> None:
@@ -91,11 +94,8 @@ def create_app(
         except TransmissionError as exc:
             response = app.response_class(
                 render_template(
-                    "_torrent_list.html",
-                    torrents=[],
-                    csrf_token=token,
-                )
-                + f'<section class="message error">{escape(str(exc))}</section>',
+                    "_torrent_list.html", torrents=[], status_error=str(exc), csrf_token=token
+                ),
                 status=HTTPStatus.BAD_GATEWAY,
                 mimetype="text/html",
             )
@@ -105,6 +105,23 @@ def create_app(
     @app.get("/healthz")
     def healthz():
         return jsonify({"ok": True})
+
+    @app.get("/healthz/transmission")
+    def transmission_healthz():
+        try:
+            _client().call("session-get")
+        except TransmissionError as exc:
+            return jsonify({"ok": False, "error": str(exc)}), HTTPStatus.SERVICE_UNAVAILABLE
+        return jsonify({"ok": True})
+
+    @app.post("/transmission/restart")
+    def restart_transmission():
+        try:
+            app.config["MAGNETO_RESTART_SERVICE"]()
+            flash("Transmission restart requested. Refresh in a few seconds.", "success")
+        except ServiceRestartError as exc:
+            flash(str(exc), "error")
+        return redirect(url_for("index"))
 
     @app.post("/torrents")
     def add_torrent():

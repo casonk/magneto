@@ -80,6 +80,35 @@ Run a manual poll with:
 magneto notify
 ```
 
+The existing `magneto-notify.timer` also checks whether Transmission RPC responds.
+With a notification route configured, it sends one alert when RPC becomes
+unavailable and one when it recovers. Repeated failed polls do not send repeated
+alerts. The check uses the same authenticated RPC client as the web UI, so it
+detects a hung daemon even while `transmission-daemon.service` is still active.
+The timer polls every five minutes in the Clockwork manifest.
+
+Magneto exposes `GET /healthz/transmission` for a direct RPC health check. It
+returns HTTP 200 when Transmission responds and HTTP 503 otherwise. The normal
+`/healthz` endpoint only checks that the web process is running.
+
+## Restarting Transmission from the web UI
+
+When Transmission RPC fails, Magneto shows **Restart Transmission service** in
+the page and in the automatically refreshed torrent list. The action uses the
+same CSRF protection as other changes and requests a nonblocking restart of
+the fixed `transmission-daemon.service` unit. It never accepts a service name
+from the browser. On each host, install its narrow sudoers rule as the account
+running `magneto-web.service`:
+
+```bash
+./scripts/install_transmission_restart_permission.sh
+systemctl --user restart magneto-web.service
+```
+
+The installer asks for sudo and writes only the exact Transmission restart
+permission. Without that rule, the web button reports an error. A restart can
+restore a stuck RPC daemon, but it does not repair underlying storage errors.
+
 The Clockwork manifest in `../clockwork/examples/magneto/web-service.local.toml`
 includes a `magneto-notify.timer` that runs the poller every five minutes.
 

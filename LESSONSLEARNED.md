@@ -21,3 +21,7 @@ Unlike `CHATHISTORY.md`, this file should keep only reusable lessons that should
   Magneto control plane before an add. Do not proxy Transmission RPC or a
   host-specific download directory across machines; derive only approved mTLS
   navigation targets from the shared service registry.
+- Check authenticated Transmission RPC for availability, not only the systemd
+  unit state: a running daemon can stop answering while blocked on storage I/O.
+  Keep web restart permission limited to the fixed local Transmission unit and
+  alert once per outage and recovery instead of restarting repeatedly.
