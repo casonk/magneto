@@ -9,12 +9,12 @@ rectangle "scripts/apply_host_setup.sh\n0 local shell edges\n8 external tools" a
 rectangle "scripts/apply_magneto_stack.sh\n0 local shell edges\n5 external tools" as shell_scripts_apply_magneto_stack_sh #DBEAFE
 rectangle "scripts/apply_transmission_vpn_guard.sh\n0 local shell edges\n1 external tool" as shell_scripts_apply_transmission_vpn_guard_sh #DBEAFE
 rectangle "scripts/diagnose_transmission_vpn.sh\n0 local shell edges\n9 external tools" as shell_scripts_diagnose_transmission_vpn_sh #DBEAFE
-rectangle "scripts/install_transmission_daemon_backend.sh\n0 local shell edges\n11 external tools" as shell_scripts_install_transmission_daemon_backend_sh #DBEAFE
+rectangle "scripts/install_transmission_daemon_backend.sh\n0 local shell edges\n12 external tools" as shell_scripts_install_transmission_daemon_backend_sh #DBEAFE
+rectangle "scripts/install_transmission_restart_permission.sh\n0 local shell edges\n2 external tools" as shell_scripts_install_transmission_restart_permission_sh #DBEAFE
 rectangle "scripts/install_transmission_vpn_guard.sh\n0 local shell edges\n5 external tools" as shell_scripts_install_transmission_vpn_guard_sh #DBEAFE
 rectangle "scripts/install_web_service.sh\n0 local shell edges\n7 external tools" as shell_scripts_install_web_service_sh #DBEAFE
-rectangle "scripts/run_tachometer_profile.sh\n0 local shell edges\n6 external tools" as shell_scripts_run_tachometer_profile_sh #DBEAFE
+rectangle "scripts/run_tachometer_profile.sh\n0 local shell edges\n1 external tool" as shell_scripts_run_tachometer_profile_sh #DBEAFE
 rectangle "scripts/transmission_vpn_guard.sh\n0 local shell edges\n5 external tools" as shell_scripts_transmission_vpn_guard_sh #DBEAFE
-cloud "agent-utilization" as tool_agent_utilization #FEF3C7
 cloud "awk" as tool_awk #FEF3C7
 cloud "cat" as tool_cat #FEF3C7
 cloud "chmod" as tool_chmod #FEF3C7
@@ -24,25 +24,24 @@ cloud "curl" as tool_curl #FEF3C7
 cloud "cut" as tool_cut #FEF3C7
 cloud "get" as tool_get #FEF3C7
 cloud "grep" as tool_grep #FEF3C7
-cloud "host-snapshot" as tool_host_snapshot #FEF3C7
-cloud "host-summarize" as tool_host_summarize #FEF3C7
 cloud "id" as tool_id #FEF3C7
+cloud "install" as tool_install #FEF3C7
 cloud "ip" as tool_ip #FEF3C7
 cloud "mapfile" as tool_mapfile #FEF3C7
 cloud "mkdir" as tool_mkdir #FEF3C7
 cloud "nft" as tool_nft #FEF3C7
 cloud "nordvpn" as tool_nordvpn #FEF3C7
 cloud "pip" as tool_pip #FEF3C7
+cloud "pkill" as tool_pkill #FEF3C7
 cloud "rm" as tool_rm #FEF3C7
-cloud "run" as tool_run #FEF3C7
 cloud "seconds" as tool_seconds #FEF3C7
 cloud "sleep" as tool_sleep #FEF3C7
 cloud "sort" as tool_sort #FEF3C7
 cloud "ss" as tool_ss #FEF3C7
-cloud "summarize" as tool_summarize #FEF3C7
 cloud "systemctl" as tool_systemctl #FEF3C7
 cloud "tachometer" as tool_tachometer #FEF3C7
 cloud "venv" as tool_venv #FEF3C7
+cloud "visudo" as tool_visudo #FEF3C7
 cloud "yes" as tool_yes #FEF3C7
 shell_scripts_apply_host_setup_sh --> tool_cat
 shell_scripts_apply_host_setup_sh --> tool_chmod
@@ -74,10 +73,13 @@ shell_scripts_install_transmission_daemon_backend_sh --> tool_cut
 shell_scripts_install_transmission_daemon_backend_sh --> tool_get
 shell_scripts_install_transmission_daemon_backend_sh --> tool_grep
 shell_scripts_install_transmission_daemon_backend_sh --> tool_mapfile
+shell_scripts_install_transmission_daemon_backend_sh --> tool_pkill
 shell_scripts_install_transmission_daemon_backend_sh --> tool_rm
 shell_scripts_install_transmission_daemon_backend_sh --> tool_sleep
 shell_scripts_install_transmission_daemon_backend_sh --> tool_sort
 shell_scripts_install_transmission_daemon_backend_sh --> tool_ss
+shell_scripts_install_transmission_restart_permission_sh --> tool_install
+shell_scripts_install_transmission_restart_permission_sh --> tool_visudo
 shell_scripts_install_transmission_vpn_guard_sh --> tool_cat
 shell_scripts_install_transmission_vpn_guard_sh --> tool_grep
 shell_scripts_install_transmission_vpn_guard_sh --> tool_id
@@ -90,11 +92,6 @@ shell_scripts_install_web_service_sh --> tool_mkdir
 shell_scripts_install_web_service_sh --> tool_pip
 shell_scripts_install_web_service_sh --> tool_systemctl
 shell_scripts_install_web_service_sh --> tool_venv
-shell_scripts_run_tachometer_profile_sh --> tool_agent_utilization
-shell_scripts_run_tachometer_profile_sh --> tool_host_snapshot
-shell_scripts_run_tachometer_profile_sh --> tool_host_summarize
-shell_scripts_run_tachometer_profile_sh --> tool_run
-shell_scripts_run_tachometer_profile_sh --> tool_summarize
 shell_scripts_run_tachometer_profile_sh --> tool_tachometer
 shell_scripts_transmission_vpn_guard_sh --> tool_cat
 shell_scripts_transmission_vpn_guard_sh --> tool_id
@@ -102,8 +99,8 @@ shell_scripts_transmission_vpn_guard_sh --> tool_nft
 shell_scripts_transmission_vpn_guard_sh --> tool_rm
 shell_scripts_transmission_vpn_guard_sh --> tool_yes
 note as shellGraphSummary
-Scanned 9 shell scripts.
+Scanned 10 shell scripts.
 Detected 0 local shell edges.
-Detected 30 external tools.
+Detected 28 external tools.
 end note
 @enduml

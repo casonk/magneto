@@ -77,6 +77,8 @@ class "ResponseLike" as src.magneto.transmission.ResponseLike {
   json() -> dict[str, Any]
   raise_for_status() -> None
 }
+class "<color:red>ServiceRestartError</color>" as src.magneto.service.ServiceRestartError {
+}
 class "ShockRelayNotifier" as src.magneto.notifications.ShockRelayNotifier {
   config
   available() -> bool
