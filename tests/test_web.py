@@ -33,6 +33,9 @@ class FakeClient:
                 "uploadLimited": False,
                 "uploadLimitKbps": 0,
                 "uploadLimitText": "Unlimited",
+                "downloadLimited": False,
+                "downloadLimitKbps": 0,
+                "downloadLimitText": "Unlimited",
                 "seedLimitEnabled": False,
                 "seedRatioLimit": 0,
                 "seedLimitText": "Global",
@@ -64,6 +67,9 @@ class FakeClient:
 
     def set_upload_limit(self, torrent_id, *, enabled, kbps):
         self.calls.append(("set_upload_limit", torrent_id, enabled, kbps))
+
+    def set_download_limit(self, torrent_id, *, enabled, kbps):
+        self.calls.append(("set_download_limit", torrent_id, enabled, kbps))
 
     def set_seed_ratio(self, torrent_id, *, enabled, ratio=0.0):
         self.calls.append(("set_seed_ratio", torrent_id, enabled, ratio))
@@ -106,6 +112,8 @@ def test_index_renders_mobile_controls(tmp_path):
     assert "2.0 GB" in text
     assert "128.0 MB" in text
     assert "Upload KB/s" in text
+    assert "Download rate" in text
+    assert 'id="torrent-3"' in text
     assert "No seed" in text
     assert str(tmp_path / "downloads") in text
     assert 'data-refresh-url="/torrents/fragment"' in text
@@ -380,6 +388,48 @@ def test_throttle_upload_action_sets_limit(tmp_path):
 
     assert response.status_code == 302
     assert fake_client.calls == [("set_upload_limit", 3, True, 42)]
+
+
+def test_throttle_download_action_sets_limit_or_unlimited(tmp_path):
+    fake_client = FakeClient()
+    app = _app(tmp_path, fake_client)
+    client = app.test_client()
+    token = _csrf(client)
+
+    limited = client.post(
+        "/torrents/3/throttle-download",
+        data={"csrf_token": token, "download_limit_kbps": "512"},
+        headers={"Origin": "http://localhost"},
+    )
+    unlimited = client.post(
+        "/torrents/3/throttle-download",
+        data={"csrf_token": token, "download_limit_kbps": "0"},
+        headers={"Origin": "http://localhost"},
+    )
+
+    assert limited.status_code == unlimited.status_code == 302
+    assert fake_client.calls == [
+        ("set_download_limit", 3, True, 512),
+        ("set_download_limit", 3, False, 0),
+    ]
+
+
+def test_throttle_download_action_rejects_invalid_limit(tmp_path):
+    fake_client = FakeClient()
+    app = _app(tmp_path, fake_client)
+    client = app.test_client()
+    token = _csrf(client)
+
+    response = client.post(
+        "/torrents/3/throttle-download",
+        data={"csrf_token": token, "download_limit_kbps": "-1"},
+        headers={"Origin": "http://localhost"},
+        follow_redirects=True,
+    )
+
+    assert response.status_code == 200
+    assert "Download limit must be between" in response.get_data(as_text=True)
+    assert fake_client.calls == []
 
 
 def test_state_change_requires_csrf(tmp_path):

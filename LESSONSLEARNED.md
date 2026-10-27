@@ -16,6 +16,9 @@ Unlike `CHATHISTORY.md`, this file should keep only reusable lessons that should
 - Keep local-only, private, reference-only, or generated boundaries explicit so published or runtime behavior is not confused with offline material or non-committable inputs.
 - Keep tracked examples, fixtures, and `.example` templates scrubbed of real paths, usernames, hostnames, account identifiers, or other instance-specific values; real operator data belongs only in gitignored local config.
 - If the repo exposes a dashboard or admin surface, keep loopback-safe defaults in the app itself and treat wider network exposure as an explicit trust-boundary decision rather than a documentation assumption.
+- Deep links in notifications should be built from the configured public
+  application origin and a stable page anchor, never from an internal RPC URL
+  or an untrusted request host.
 - Re-run repo-appropriate validation after changing generated artifacts, diagrams, workflows, or other CI-facing files so formatting and compatibility issues are caught before push.
 - A multi-host Transmission picker must navigate to the selected host's own
   Magneto control plane before an add. Do not proxy Transmission RPC or a

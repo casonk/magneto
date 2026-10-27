@@ -58,11 +58,16 @@ notifications through the sibling `shock-relay` repo. Configure these in
 MAGNETO_NOTIFY_ENABLED=1
 MAGNETO_SHOCK_RELAY_ROOT=/path/to/shock-relay
 MAGNETO_NOTIFY_TAG=magneto/notify
+MAGNETO_PUBLIC_ORIGIN=https://torrents.example.internal
 MAGNETO_NOTIFY_SIGNAL_TARGET=+15551234567
 MAGNETO_NOTIFY_SIGNAL_CONFIG=/path/to/shock-relay/services/signal-cli/config.local.yaml
 MAGNETO_NOTIFY_EMAIL_TARGET=you@example.com
 MAGNETO_NOTIFY_EMAIL_CONFIG=/path/to/shock-relay/services/gmail-imap/config.local.yaml
 ```
+
+`MAGNETO_PUBLIC_ORIGIN` adds a direct link to each torrent's detail card in
+completion and error notifications. It must be the browser-accessible Magneto
+origin, not the Transmission RPC endpoint.
 
 Supported services are `signal`, `telegram`, `twilio`, `whatsapp`, `gmail`, and
 `gmail-imap`. Signal notifications receive a `tag` metadata line, Gmail

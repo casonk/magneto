@@ -10,6 +10,7 @@ import sys
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Protocol
+from urllib.parse import urlsplit
 
 from magneto.config import AppConfig
 from magneto.transmission import TransmissionClient, TransmissionError
@@ -49,6 +50,7 @@ class NotificationConfig:
     state_file: Path
     routes: tuple[NotificationRoute, ...] = ()
     tag: str | None = None
+    public_origin: str | None = None
 
     @classmethod
     def from_app_config(cls, config: AppConfig) -> NotificationConfig:
@@ -61,6 +63,7 @@ class NotificationConfig:
             state_file=_state_file(config.notify_state_file),
             routes=tuple(NotificationRoute(*route) for route in config.notify_routes),
             tag=config.notify_tag,
+            public_origin=config.public_origin,
         )
 
     def resolved_routes(self) -> tuple[NotificationRoute, ...]:
@@ -195,7 +198,11 @@ class TorrentNotificationMonitor:
         for torrent in torrents:
             key = _torrent_key(torrent)
             torrent_state = state.setdefault("torrents", {}).setdefault(key, {})
-            events = _events_for_torrent(torrent, torrent_state)
+            events = _events_for_torrent(
+                torrent,
+                torrent_state,
+                detail_url=_torrent_detail_url(torrent, self.notifier.config.public_origin),
+            )
             if not events:
                 continue
             for event in events:
@@ -231,7 +238,9 @@ def build_monitor(config: AppConfig | None = None) -> TorrentNotificationMonitor
     )
 
 
-def _events_for_torrent(torrent: dict, torrent_state: dict) -> list[dict[str, str]]:
+def _events_for_torrent(
+    torrent: dict, torrent_state: dict, *, detail_url: str | None = None
+) -> list[dict[str, str]]:
     events = []
     done_marker = _completion_marker(torrent)
     if done_marker and torrent_state.get("complete") != done_marker:
@@ -240,7 +249,7 @@ def _events_for_torrent(torrent: dict, torrent_state: dict) -> list[dict[str, st
                 "kind": "complete",
                 "marker": done_marker,
                 "subject": f"Magneto complete: {_torrent_name(torrent)}",
-                "body": _completion_body(torrent),
+                "body": _with_detail_link(_completion_body(torrent), detail_url),
             }
         )
 
@@ -251,7 +260,7 @@ def _events_for_torrent(torrent: dict, torrent_state: dict) -> list[dict[str, st
                 "kind": "error",
                 "marker": error_marker,
                 "subject": f"Magneto error: {_torrent_name(torrent)}",
-                "body": _error_body(torrent),
+                "body": _with_detail_link(_error_body(torrent), detail_url),
             }
         )
     return events
@@ -305,6 +314,30 @@ def _torrent_key(torrent: dict) -> str:
 
 def _torrent_name(torrent: dict) -> str:
     return str(torrent.get("name") or "<unnamed>")[:120]
+
+
+def _torrent_detail_url(torrent: dict, public_origin: str | None) -> str | None:
+    torrent_id = torrent.get("id")
+    if not isinstance(torrent_id, int) or torrent_id < 1 or not public_origin:
+        return None
+    try:
+        parsed = urlsplit(public_origin)
+    except ValueError:
+        return None
+    if (
+        parsed.scheme not in {"http", "https"}
+        or not parsed.netloc
+        or parsed.username
+        or parsed.password
+        or parsed.query
+        or parsed.fragment
+    ):
+        return None
+    return f"{public_origin.rstrip('/')}/#torrent-{torrent_id}"
+
+
+def _with_detail_link(body: str, detail_url: str | None) -> str:
+    return f"{body}\nOpen torrent: {detail_url}" if detail_url else body
 
 
 def _load_state(path: Path) -> dict:
