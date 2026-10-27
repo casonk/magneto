@@ -2,7 +2,7 @@
   {% include "_transmission_error.html" %}
 {% elif torrents %}
   {% for torrent in torrents %}
-    <article class="torrent">
+    <article class="torrent" id="torrent-{{ torrent.id }}">
       <div class="torrent-head">
         <h2>{{ torrent.name }}</h2>
         <span class="status {{ torrent.statusClass }}">{{ torrent.statusLabel }}</span>
@@ -65,8 +65,28 @@
           <dt>Upload cap</dt>
           <dd>{{ torrent.uploadLimitText }}</dd>
         </div>
+        <div>
+          <dt>Download cap</dt>
+          <dd>{{ torrent.downloadLimitText }}</dd>
+        </div>
       </dl>
       <div class="torrent-settings">
+        <form method="post" action="{{ url_for('torrent_action', torrent_id=torrent.id, action='throttle-download') }}">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+          <label for="download-limit-{{ torrent.id }}">Download rate</label>
+          <div class="inline-control">
+            <select id="download-limit-{{ torrent.id }}" name="download_limit_kbps">
+              <option value="0" {% if not torrent.downloadLimited %}selected{% endif %}>Unlimited</option>
+              {% for limit in [128, 256, 512, 1024, 2048, 5120, 10000] %}
+                <option value="{{ limit }}" {% if torrent.downloadLimited and torrent.downloadLimitKbps == limit %}selected{% endif %}>{{ limit }} KB/s</option>
+              {% endfor %}
+              {% if torrent.downloadLimited and torrent.downloadLimitKbps not in [128, 256, 512, 1024, 2048, 5120, 10000] %}
+                <option value="{{ torrent.downloadLimitKbps }}" selected>{{ torrent.downloadLimitKbps }} KB/s (current)</option>
+              {% endif %}
+            </select>
+            <button type="submit">Set</button>
+          </div>
+        </form>
         <form method="post" action="{{ url_for('torrent_action', torrent_id=torrent.id, action='throttle-upload') }}">
           <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
           <label for="upload-limit-{{ torrent.id }}">Upload KB/s</label>

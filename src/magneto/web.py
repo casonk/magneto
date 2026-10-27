@@ -178,6 +178,13 @@ def create_app(
                     flash(f"Upload limited to {kbps} KB/s.", "success")
                 else:
                     flash("Upload limit disabled.", "success")
+            elif action == "throttle-download":
+                kbps = _parse_download_limit(request.form.get("download_limit_kbps", ""))
+                _client().set_download_limit(torrent_id, enabled=kbps > 0, kbps=kbps)
+                if kbps > 0:
+                    flash(f"Download limited to {kbps} KB/s.", "success")
+                else:
+                    flash("Download limit disabled.", "success")
             elif action == "restart":
                 _client().restart(torrent_id)
                 flash("Torrent restarted.", "success")
@@ -289,13 +296,21 @@ def _validate_magnet(value: str) -> None:
 
 
 def _parse_upload_limit(value: str) -> int:
+    return _parse_rate_limit(value, "Upload")
+
+
+def _parse_download_limit(value: str) -> int:
+    return _parse_rate_limit(value, "Download")
+
+
+def _parse_rate_limit(value: str, direction: str) -> int:
     stripped = value.strip()
     if not stripped:
         return 0
     try:
         kbps = int(stripped)
     except ValueError as exc:
-        raise TransmissionError("Upload limit must be a whole number of KB/s.") from exc
+        raise TransmissionError(f"{direction} limit must be a whole number of KB/s.") from exc
     if kbps < 0 or kbps > 10_000_000:
-        raise TransmissionError("Upload limit must be between 0 and 10000000 KB/s.")
+        raise TransmissionError(f"{direction} limit must be between 0 and 10000000 KB/s.")
     return kbps

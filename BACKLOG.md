@@ -23,6 +23,13 @@ Mark items `[x]` when complete and move them to Done.
 
 ## Done
 
+- [x] [manual:2026-10-26] **Add per-torrent download rate presets.** Magneto
+  can set or clear Transmission's per-torrent download limit from the torrent
+  card.
+- [x] [manual:2026-10-26] **Link torrent notifications to the detail card.**
+  Completion and error messages include a deep link built from the configured
+  `MAGNETO_PUBLIC_ORIGIN`.
+
 - [x] [manual:2026-08-29] **Close four `AGENTS.md` shared-convention gaps.**
   The shared checker now passes; `AGENTS.md` names the control-plane reference,
   local handoff, durable lessons, and reproducible local verification.

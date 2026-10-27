@@ -114,6 +114,18 @@ def test_set_upload_limit_updates_per_torrent_limit():
     }
 
 
+def test_set_download_limit_updates_per_torrent_limit():
+    transport = FakeTransport([FakeResponse()])
+    client = TransmissionClient("http://example/rpc", transport=transport)
+
+    client.set_download_limit(7, enabled=True, kbps=512)
+
+    assert transport.calls[0]["json"] == {
+        "method": "torrent-set",
+        "arguments": {"ids": [7], "downloadLimited": True, "downloadLimit": 512},
+    }
+
+
 def test_set_seed_ratio_updates_per_torrent_seed_policy():
     transport = FakeTransport([FakeResponse()])
     client = TransmissionClient("http://example/rpc", transport=transport)
@@ -159,6 +171,8 @@ def test_normalize_torrent_formats_display_fields():
             "peersConnected": 3,
             "uploadLimited": True,
             "uploadLimit": 25,
+            "downloadLimited": True,
+            "downloadLimit": 512,
             "seedRatioMode": 1,
             "seedRatioLimit": 0.0,
         }
@@ -172,6 +186,7 @@ def test_normalize_torrent_formats_display_fields():
     assert torrent["downloadedText"] == "1.0 KB"
     assert torrent["uploadedText"] == "512 B"
     assert torrent["uploadLimitText"] == "25 KB/s"
+    assert torrent["downloadLimitText"] == "512 KB/s"
     assert torrent["seedLimitEnabled"] is True
     assert torrent["seedLimitText"] == "0"
 

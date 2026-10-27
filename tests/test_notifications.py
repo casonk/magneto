@@ -42,7 +42,9 @@ def _shock_root(tmp_path: Path, service: str = "signal-cli", script: str = "send
     return root
 
 
-def _config(tmp_path: Path, *, service: str = "signal") -> NotificationConfig:
+def _config(
+    tmp_path: Path, *, service: str = "signal", public_origin: str | None = None
+) -> NotificationConfig:
     return NotificationConfig(
         enabled=True,
         shock_relay_root=_shock_root(tmp_path),
@@ -50,6 +52,7 @@ def _config(tmp_path: Path, *, service: str = "signal") -> NotificationConfig:
         target="+15551234567",
         config_path=str(tmp_path / "config.local.yaml"),
         state_file=tmp_path / "notifications.json",
+        public_origin=public_origin,
     )
 
 
@@ -153,7 +156,7 @@ def test_monitor_sends_completion_once_and_records_state(dyno_proc, tmp_path):
         "uploadedText": "0 B",
         "uploadRatio": 0,
     }
-    config = _config(tmp_path)
+    config = _config(tmp_path, public_origin="https://torrents.example.internal")
     monitor = TorrentNotificationMonitor(
         client=FakeTorrentClient([torrent]),
         notifier=ShockRelayNotifier(config),
@@ -168,6 +171,8 @@ def test_monitor_sends_completion_once_and_records_state(dyno_proc, tmp_path):
     assert first.sent == 1
     assert second.sent == 0
     assert recorder.call_count == 1
+    body = recorder.commands()[0][3]
+    assert "Open torrent: https://torrents.example.internal/#torrent-7" in body
     state = json.loads(config.state_file.read_text(encoding="utf-8"))
     assert state["torrents"]["abc123"]["complete"] == "123"
 
@@ -225,7 +230,7 @@ def test_monitor_sends_error_when_error_message_changes(dyno_proc, tmp_path):
         "statusLabel": "Error",
         "trackerStatus": "tracker.example: failed",
     }
-    config = _config(tmp_path)
+    config = _config(tmp_path, public_origin="https://torrents.example.internal")
     monitor = TorrentNotificationMonitor(
         client=FakeTorrentClient([torrent]),
         notifier=ShockRelayNotifier(config),
@@ -237,7 +242,25 @@ def test_monitor_sends_error_when_error_message_changes(dyno_proc, tmp_path):
         result = monitor.run_once()
 
     assert result.sent == 1
-    assert "Magneto error: example.iso" in recorder.commands()[0][3]
+    body = recorder.commands()[0][3]
+    assert "Magneto error: example.iso" in body
+    assert "Open torrent: https://torrents.example.internal/#torrent-7" in body
+
+
+def test_detail_link_rejects_non_origin_configuration(dyno_proc, tmp_path):
+    torrent = {"id": 7, "name": "example.iso", "isFinished": True, "percentDone": 1.0}
+    config = _config(tmp_path, public_origin="javascript:alert(1)")
+    monitor = TorrentNotificationMonitor(
+        client=FakeTorrentClient([torrent]),
+        notifier=ShockRelayNotifier(config),
+        state_file=config.state_file,
+    )
+    recorder = dyno_proc()
+
+    with SubprocessPatch(recorder, target="magneto.notifications.subprocess.run"):
+        monitor.run_once()
+
+    assert "Open torrent:" not in recorder.commands()[0][3]
 
 
 def test_monitor_disabled_without_target(tmp_path):

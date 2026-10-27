@@ -21,6 +21,8 @@ TORRENT_FIELDS = [
     "eta",
     "rateDownload",
     "rateUpload",
+    "downloadLimited",
+    "downloadLimit",
     "totalSize",
     "downloadedEver",
     "uploadedEver",
@@ -183,6 +185,16 @@ class TransmissionClient:
             },
         )
 
+    def set_download_limit(self, torrent_id: int, *, enabled: bool, kbps: int) -> None:
+        self.call(
+            "torrent-set",
+            {
+                "ids": [torrent_id],
+                "downloadLimited": enabled,
+                "downloadLimit": max(kbps, 0),
+            },
+        )
+
     def set_seed_ratio(self, torrent_id: int, *, enabled: bool, ratio: float = 0.0) -> None:
         self.call(
             "torrent-set",
@@ -211,6 +223,8 @@ def normalize_torrent(torrent: dict[str, Any]) -> dict[str, Any]:
     error = int(torrent.get("error") or 0)
     upload_limited = bool(torrent.get("uploadLimited") or False)
     upload_limit = int(torrent.get("uploadLimit") or 0)
+    download_limited = bool(torrent.get("downloadLimited") or False)
+    download_limit = int(torrent.get("downloadLimit") or 0)
     seed_ratio_mode = int(torrent.get("seedRatioMode") or 0)
     seed_ratio_limit = float(torrent.get("seedRatioLimit") or 0.0)
 
@@ -237,6 +251,9 @@ def normalize_torrent(torrent: dict[str, Any]) -> dict[str, Any]:
         "uploadLimited": upload_limited,
         "uploadLimitKbps": upload_limit,
         "uploadLimitText": f"{upload_limit} KB/s" if upload_limited else "Unlimited",
+        "downloadLimited": download_limited,
+        "downloadLimitKbps": download_limit,
+        "downloadLimitText": f"{download_limit} KB/s" if download_limited else "Unlimited",
         "seedRatioMode": seed_ratio_mode,
         "seedRatioLimit": seed_ratio_limit,
         "seedLimitEnabled": seed_ratio_mode == 1,
