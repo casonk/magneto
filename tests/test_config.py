@@ -132,3 +132,29 @@ def test_from_env_rejects_duplicate_torrent_host_ids(monkeypatch, tmp_path):
 
     with pytest.raises(ConfigurationError, match="Duplicate torrent host id"):
         AppConfig.from_env()
+
+
+def test_default_rates_and_seed_ratio_come_from_the_environment(monkeypatch):
+    monkeypatch.setenv("MAGNETO_DEFAULT_DOWNLOAD_LIMIT_KBPS", "512")
+    monkeypatch.setenv("MAGNETO_DEFAULT_UPLOAD_LIMIT_KBPS", "64")
+    monkeypatch.setenv("MAGNETO_DEFAULT_SEED_RATIO", "1.5")
+
+    config = AppConfig.from_env()
+
+    assert (config.default_download_limit_kbps, config.default_upload_limit_kbps) == (512, 64)
+    assert config.default_seed_ratio == 1.5
+
+
+def test_defaults_are_off_when_unset_and_invalid_values_are_rejected(monkeypatch):
+    assert AppConfig.from_env().default_seed_ratio is None
+    assert AppConfig.from_env().default_download_limit_kbps == 0
+
+    for name, value in (
+        ("MAGNETO_DEFAULT_DOWNLOAD_LIMIT_KBPS", "-5"),
+        ("MAGNETO_DEFAULT_UPLOAD_LIMIT_KBPS", "fast"),
+        ("MAGNETO_DEFAULT_SEED_RATIO", "0"),
+    ):
+        monkeypatch.setenv(name, value)
+        with pytest.raises(ConfigurationError, match=name):
+            AppConfig.from_env()
+        monkeypatch.delenv(name)

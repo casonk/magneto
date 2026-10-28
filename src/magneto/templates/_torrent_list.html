@@ -105,6 +105,22 @@
             <button type="submit">Set</button>
           </div>
         </form>
+        <form method="post" action="{{ url_for('torrent_action', torrent_id=torrent.id, action='seed-ratio') }}">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+          <label for="seed-ratio-{{ torrent.id }}">Target seed ratio</label>
+          <div class="inline-control">
+            <select id="seed-ratio-{{ torrent.id }}" name="seed_ratio">
+              <option value="global" {% if not torrent.seedLimitEnabled %}selected{% endif %}>Global default</option>
+              {% for ratio in [0.5, 1, 1.5, 2, 3, 5, 10] %}
+                <option value="{{ ratio }}" {% if torrent.seedLimitEnabled and torrent.seedRatioLimit == ratio %}selected{% endif %}>{{ ratio }}</option>
+              {% endfor %}
+              {% if torrent.seedLimitEnabled and torrent.seedRatioLimit > 0 and torrent.seedRatioLimit not in [0.5, 1, 1.5, 2, 3, 5, 10] %}
+                <option value="{{ torrent.seedRatioLimit }}" selected>{{ torrent.seedRatioLimit }} (current)</option>
+              {% endif %}
+            </select>
+            <button type="submit">Set</button>
+          </div>
+        </form>
         {% if torrent.seedLimitEnabled and torrent.seedRatioLimit == 0 %}
           <form method="post" action="{{ url_for('torrent_action', torrent_id=torrent.id, action='allow-seed') }}">
             <input type="hidden" name="csrf_token" value="{{ csrf_token }}">

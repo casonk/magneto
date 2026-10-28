@@ -48,6 +48,26 @@ Defaults:
 - Transmission auth: `auto-pass` profile and entry from `config/magneto.env.local`
 - download directory: `/srv/snowbridge/share/torrents`
 
+## Per-torrent controls and defaults
+
+Each torrent card sets its own download rate, upload rate and **target seed
+ratio**. Pick a ratio such as 2 to stop seeding once it is reached, or *Global
+default* to follow Transmission's own setting; use **No seed** to stop seeding
+immediately (a ratio of zero is not accepted in the ratio control).
+
+New torrents can start with defaults instead of Transmission's global settings.
+Set any of these in the service environment (see `config/magneto.env.example`):
+
+| Variable | Meaning |
+|---|---|
+| `MAGNETO_DEFAULT_DOWNLOAD_LIMIT_KBPS` | download rate cap, KB/s |
+| `MAGNETO_DEFAULT_UPLOAD_LIMIT_KBPS` | upload rate cap, KB/s |
+| `MAGNETO_DEFAULT_SEED_RATIO` | target seed ratio, greater than 0 |
+| `MAGNETO_NO_SEED_BY_DEFAULT` | `1` disables seeding on new torrents and overrides the upload cap and ratio |
+
+Defaults apply only to a newly added torrent, never to a duplicate, and a
+failure to apply them is reported without failing the add.
+
 ## Notifications
 
 Magneto can poll Transmission and send one-shot torrent completion/error

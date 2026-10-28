@@ -432,6 +432,130 @@ def test_throttle_download_action_rejects_invalid_limit(tmp_path):
     assert fake_client.calls == []
 
 
+def test_seed_ratio_action_sets_a_target_or_the_global_default(tmp_path):
+    fake_client = FakeClient()
+    client = _app(tmp_path, fake_client).test_client()
+    token = _csrf(client)
+
+    for value in ("2", "0.5", "global"):
+        response = client.post(
+            "/torrents/3/seed-ratio",
+            data={"csrf_token": token, "seed_ratio": value},
+            headers={"Origin": "http://localhost"},
+        )
+        assert response.status_code == 302
+
+    assert fake_client.calls == [
+        ("set_seed_ratio", 3, True, 2.0),
+        ("set_seed_ratio", 3, True, 0.5),
+        ("set_seed_ratio", 3, False, 0.0),
+    ]
+
+
+def test_seed_ratio_action_rejects_zero_and_junk(tmp_path):
+    fake_client = FakeClient()
+    client = _app(tmp_path, fake_client).test_client()
+    token = _csrf(client)
+
+    for value, message in (
+        ("0", "use No seed"),
+        ("-1", "greater than 0"),
+        ("abc", "must be a number"),
+    ):
+        response = client.post(
+            "/torrents/3/seed-ratio",
+            data={"csrf_token": token, "seed_ratio": value},
+            headers={"Origin": "http://localhost"},
+            follow_redirects=True,
+        )
+        assert message in response.get_data(as_text=True)
+
+    assert fake_client.calls == []
+
+
+def test_index_offers_a_target_seed_ratio_control(tmp_path):
+    html = _app(tmp_path, FakeClient()).test_client().get("/").get_data(as_text=True)
+
+    assert 'name="seed_ratio"' in html and "Target seed ratio" in html
+    assert '<option value="global" selected>Global default</option>' in html
+
+
+class AddingClient(FakeClient):
+    def __init__(self, result, fail_on=None):
+        super().__init__()
+        self.result = result
+        self.fail_on = fail_on
+
+    def add_magnet(self, magnet, download_dir, *, no_seed=False):
+        self.calls.append(("add_magnet", magnet))
+        return self.result
+
+    def set_download_limit(self, torrent_id, *, enabled, kbps):
+        if self.fail_on == "download":
+            raise TransmissionError("rpc down")
+        super().set_download_limit(torrent_id, enabled=enabled, kbps=kbps)
+
+
+def _defaults_app(tmp_path, client, **overrides):
+    config = AppConfig(
+        transmission_url="http://example/rpc",
+        download_dir=str(tmp_path / "downloads"),
+        secret_key="test-secret",
+        default_download_limit_kbps=512,
+        default_upload_limit_kbps=64,
+        default_seed_ratio=2.0,
+        **overrides,
+    )
+    return create_app(config, client=client).test_client()
+
+
+MAGNET = "magnet:?xt=urn:btih:" + "a" * 40
+
+
+def _add(client, follow=False):
+    token = _csrf(client)
+    return client.post(
+        "/torrents",
+        data={"csrf_token": token, "magnet": MAGNET},
+        headers={"Origin": "http://localhost"},
+        follow_redirects=follow,
+    )
+
+
+def test_new_torrents_get_the_configured_defaults(tmp_path):
+    fake = AddingClient({"torrent-added": {"id": 9}})
+    _add(_defaults_app(tmp_path, fake))
+
+    assert fake.calls == [
+        ("add_magnet", MAGNET),
+        ("set_download_limit", 9, True, 512),
+        ("set_upload_limit", 9, True, 64),
+        ("set_seed_ratio", 9, True, 2.0),
+    ]
+
+
+def test_defaults_are_not_applied_to_a_duplicate_or_an_unknown_result(tmp_path):
+    for result in ({"torrent-duplicate": {"id": 4}}, {}, None):
+        fake = AddingClient(result)
+        _add(_defaults_app(tmp_path, fake))
+        assert fake.calls == [("add_magnet", MAGNET)]
+
+
+def test_no_seed_by_default_wins_over_the_upload_and_ratio_defaults(tmp_path):
+    fake = AddingClient({"torrent-added": {"id": 9}})
+    _add(_defaults_app(tmp_path, fake, no_seed_by_default=True))
+
+    assert fake.calls == [("add_magnet", MAGNET), ("set_download_limit", 9, True, 512)]
+
+
+def test_a_failed_default_does_not_fail_the_add(tmp_path):
+    fake = AddingClient({"torrent-added": {"id": 9}}, fail_on="download")
+    response = _add(_defaults_app(tmp_path, fake), follow=True)
+
+    text = response.get_data(as_text=True)
+    assert "Torrent added." in text and "default limits were not applied" in text
+
+
 def test_state_change_requires_csrf(tmp_path):
     fake_client = FakeClient()
     app = _app(tmp_path, fake_client)

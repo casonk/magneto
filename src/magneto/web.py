@@ -131,20 +131,22 @@ def create_app(
         try:
             if magnet:
                 _validate_magnet(magnet)
-                _client().add_magnet(
+                result = _client().add_magnet(
                     magnet, app_config.download_dir, no_seed=app_config.no_seed_by_default
                 )
                 flash("Torrent added.", "success")
+                _apply_defaults(result)
             elif upload and upload.filename:
                 if not upload.filename.lower().endswith(".torrent"):
                     raise ValueError("Uploaded file must use a .torrent extension.")
                 content = upload.read()
                 if not content:
                     raise ValueError("Uploaded torrent file was empty.")
-                _client().add_torrent_file(
+                result = _client().add_torrent_file(
                     content, app_config.download_dir, no_seed=app_config.no_seed_by_default
                 )
                 flash("Torrent file added.", "success")
+                _apply_defaults(result)
             else:
                 raise ValueError("Paste a magnet link or choose a .torrent file.")
         except (TransmissionError, ValueError) as exc:
@@ -171,6 +173,14 @@ def create_app(
                 _client().set_seed_ratio(torrent_id, enabled=False)
                 _client().set_upload_limit(torrent_id, enabled=False, kbps=0)
                 flash("Seeding restored to the global Transmission defaults.", "success")
+            elif action == "seed-ratio":
+                ratio = _parse_seed_ratio(request.form.get("seed_ratio", ""))
+                if ratio is None:
+                    _client().set_seed_ratio(torrent_id, enabled=False)
+                    flash("Seed ratio set to the global Transmission default.", "success")
+                else:
+                    _client().set_seed_ratio(torrent_id, enabled=True, ratio=ratio)
+                    flash(f"Seeding stops at ratio {ratio:g}.", "success")
             elif action == "throttle-upload":
                 kbps = _parse_upload_limit(request.form.get("upload_limit_kbps", ""))
                 _client().set_upload_limit(torrent_id, enabled=kbps > 0, kbps=kbps)
@@ -202,6 +212,31 @@ def create_app(
 
     def _client() -> TransmissionClient:
         return app.config["MAGNETO_CLIENT"]
+
+    def _apply_defaults(result: object) -> None:
+        """Give a newly added torrent the configured default rates and seed ratio.
+
+        A failure here never fails the add: the torrent is already in Transmission.
+        """
+        added = result.get("torrent-added") if isinstance(result, dict) else None
+        torrent_id = added.get("id") if isinstance(added, dict) else None
+        if not isinstance(torrent_id, int):
+            return
+        try:
+            if app_config.default_download_limit_kbps:
+                _client().set_download_limit(
+                    torrent_id, enabled=True, kbps=app_config.default_download_limit_kbps
+                )
+            if app_config.default_upload_limit_kbps and not app_config.no_seed_by_default:
+                _client().set_upload_limit(
+                    torrent_id, enabled=True, kbps=app_config.default_upload_limit_kbps
+                )
+            if app_config.default_seed_ratio and not app_config.no_seed_by_default:
+                _client().set_seed_ratio(
+                    torrent_id, enabled=True, ratio=app_config.default_seed_ratio
+                )
+        except TransmissionError as exc:
+            flash(f"Torrent added, but its default limits were not applied: {exc}", "error")
 
     return app
 
@@ -297,6 +332,25 @@ def _validate_magnet(value: str) -> None:
 
 def _parse_upload_limit(value: str) -> int:
     return _parse_rate_limit(value, "Upload")
+
+
+def _parse_seed_ratio(value: str) -> float | None:
+    """A target ratio above zero, or None for the global Transmission default.
+
+    Zero is deliberately rejected: "stop seeding now" is the No seed action.
+    """
+    stripped = value.strip().lower()
+    if stripped in {"", "global", "default"}:
+        return None
+    try:
+        ratio = float(stripped)
+    except ValueError as exc:
+        raise TransmissionError("Seed ratio must be a number, or Global.") from exc
+    if not 0 < ratio <= 1000:
+        raise TransmissionError(
+            "Seed ratio must be greater than 0 and at most 1000; use No seed to stop seeding."
+        )
+    return ratio
 
 
 def _parse_download_limit(value: str) -> int:
