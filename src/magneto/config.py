@@ -46,6 +46,11 @@ class AppConfig:
     notify_routes: tuple[tuple[str, str, str | None], ...] = ()
     notify_tag: str | None = None
     no_seed_by_default: bool = False
+    # Applied to each newly added torrent (not to a duplicate). 0 / None leave the
+    # global Transmission setting in force. no_seed_by_default wins over the ratio.
+    default_download_limit_kbps: int = 0
+    default_upload_limit_kbps: int = 0
+    default_seed_ratio: float | None = None
     reannounce_stalled: bool = True
     vpn_interface: str = "nordlynx"
     library_dir: str | None = None
@@ -112,6 +117,9 @@ class AppConfig:
             notify_routes=notify_routes,
             notify_tag=os.environ.get("MAGNETO_NOTIFY_TAG") or None,
             no_seed_by_default=_truthy(os.environ.get("MAGNETO_NO_SEED_BY_DEFAULT")),
+            default_download_limit_kbps=_env_kbps("MAGNETO_DEFAULT_DOWNLOAD_LIMIT_KBPS"),
+            default_upload_limit_kbps=_env_kbps("MAGNETO_DEFAULT_UPLOAD_LIMIT_KBPS"),
+            default_seed_ratio=_env_ratio("MAGNETO_DEFAULT_SEED_RATIO"),
             reannounce_stalled=_truthy(os.environ.get("MAGNETO_REANNOUNCE_STALLED", "1")),
             vpn_interface=os.environ.get("MAGNETO_VPN_INTERFACE", "nordlynx"),
             library_dir=os.environ.get("MAGNETO_LIBRARY_DIR") or None,
@@ -125,6 +133,32 @@ class AppConfig:
 
 def _split_csv(value: str) -> tuple[str, ...]:
     return tuple(part.strip() for part in value.split(",") if part.strip())
+
+
+def _env_kbps(name: str) -> int:
+    raw = os.environ.get(name, "").strip()
+    if not raw:
+        return 0
+    try:
+        value = int(raw)
+    except ValueError as exc:
+        raise ConfigurationError(f"{name} must be a whole number of KB/s") from exc
+    if not 0 <= value <= 10_000_000:
+        raise ConfigurationError(f"{name} must be between 0 and 10000000 KB/s")
+    return value
+
+
+def _env_ratio(name: str) -> float | None:
+    raw = os.environ.get(name, "").strip()
+    if not raw:
+        return None
+    try:
+        value = float(raw)
+    except ValueError as exc:
+        raise ConfigurationError(f"{name} must be a number") from exc
+    if not 0 < value <= 1000:
+        raise ConfigurationError(f"{name} must be greater than 0 and at most 1000")
+    return value
 
 
 def _truthy(value: str | None) -> bool:
