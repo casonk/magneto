@@ -51,6 +51,25 @@
         </form>
       </section>
 
+      {% if defaults_editable %}
+      <section class="defaults-panel">
+        <details>
+          <summary>Defaults for new torrents</summary>
+          <form method="post" action="{{ url_for('save_defaults') }}">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+            <label for="default-download">Download rate (KB/s, 0 = unlimited)</label>
+            <input id="default-download" type="number" name="download_kbps" min="0" max="10000000" step="1" inputmode="numeric" value="{{ defaults.download_kbps }}">
+            <label for="default-upload">Upload rate (KB/s, 0 = unlimited)</label>
+            <input id="default-upload" type="number" name="upload_kbps" min="0" max="10000000" step="1" inputmode="numeric" value="{{ defaults.upload_kbps }}">
+            <label for="default-ratio">Target seed ratio (blank = Transmission's global default)</label>
+            <input id="default-ratio" type="number" name="seed_ratio" min="0" max="1000" step="0.1" inputmode="decimal" value="{{ defaults.seed_ratio if defaults.seed_ratio else '' }}">
+            <label class="checkbox"><input type="checkbox" name="no_seed" {% if defaults.no_seed %}checked{% endif %}> Do not seed after downloading</label>
+            <button class="primary" type="submit">Save defaults</button>
+          </form>
+        </details>
+      </section>
+      {% endif %}
+
       <section
         class="torrent-list"
         aria-label="Torrents"

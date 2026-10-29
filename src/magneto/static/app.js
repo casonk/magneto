@@ -26,11 +26,47 @@
     timer = window.setTimeout(refresh, interval);
   };
 
+  // The list is replaced wholesale, which would discard a half-made choice or typed
+  // number in a per-torrent control. Hold the refresh while one is focused or changed.
+  const isEditing = () => {
+    const active = document.activeElement;
+    if (
+      active &&
+      list.contains(active) &&
+      active.matches("input, select, textarea")
+    ) {
+      return true;
+    }
+    for (const control of list.querySelectorAll("input[name], select[name], textarea[name]")) {
+      if (control.type === "hidden" || control.type === "submit") {
+        continue;
+      }
+      if (control.tagName === "SELECT") {
+        if (Array.from(control.options).some((o) => o.selected !== o.defaultSelected)) {
+          return true;
+        }
+      } else if (control.type === "checkbox" || control.type === "radio") {
+        if (control.checked !== control.defaultChecked) {
+          return true;
+        }
+      } else if (control.value !== control.defaultValue) {
+        return true;
+      }
+    }
+    return false;
+  };
+
   const refresh = async () => {
     if (inFlight || !refreshUrl) {
       schedule();
       return;
     }
+    if (isEditing()) {
+      list.classList.add("is-editing");
+      schedule();
+      return;
+    }
+    list.classList.remove("is-editing");
 
     inFlight = true;
     try {
