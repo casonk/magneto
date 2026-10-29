@@ -2,6 +2,14 @@
 
 ## Unreleased
 
+- Stop the torrent list's four-second refresh from discarding a half-made choice: it is
+  held while a rate or seed-ratio control is focused or changed, with a note that
+  updates are paused.
+- Add a **Defaults for new torrents** panel (download and upload rate, target seed
+  ratio, do-not-seed). Saved values override the `MAGNETO_DEFAULT_*` environment
+  settings and persist in `MAGNETO_SETTINGS_FILE` (default
+  `~/.local/state/magneto/settings.json`; set it empty to hide the panel).
+
 - Add a per-torrent target seed ratio control, and configurable defaults for new
   torrents (`MAGNETO_DEFAULT_DOWNLOAD_LIMIT_KBPS`, `MAGNETO_DEFAULT_UPLOAD_LIMIT_KBPS`,
   `MAGNETO_DEFAULT_SEED_RATIO`) applied after the add; `MAGNETO_NO_SEED_BY_DEFAULT`

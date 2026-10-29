@@ -20,6 +20,7 @@ from flask import (
     url_for,
 )
 
+from magneto import settings as defaults_store
 from magneto.config import AppConfig
 from magneto.service import ServiceRestartError, restart_transmission_service
 from magneto.transmission import TransmissionClient, TransmissionError
@@ -70,7 +71,26 @@ def create_app(
             download_dir=app_config.download_dir,
             csrf_token=token,
             torrent_hosts=app_config.torrent_hosts,
+            defaults=defaults_store.load(app_config),
+            defaults_editable=bool(app_config.settings_file),
         )
+
+    @app.post("/settings/defaults")
+    def save_defaults():
+        if not app_config.settings_file:
+            abort(HTTPStatus.NOT_FOUND)
+        try:
+            chosen = defaults_store.Defaults(
+                download_kbps=_parse_download_limit(request.form.get("download_kbps", "")),
+                upload_kbps=_parse_upload_limit(request.form.get("upload_kbps", "")),
+                seed_ratio=_parse_seed_ratio(request.form.get("seed_ratio", "")),
+                no_seed=request.form.get("no_seed") == "on",
+            )
+            defaults_store.save(app_config, chosen)
+            flash("Defaults for new torrents saved.", "success")
+        except (TransmissionError, OSError) as exc:
+            flash(str(exc), "error")
+        return redirect(url_for("index"))
 
     @app.get("/api/torrents")
     def api_torrents():
@@ -132,7 +152,7 @@ def create_app(
             if magnet:
                 _validate_magnet(magnet)
                 result = _client().add_magnet(
-                    magnet, app_config.download_dir, no_seed=app_config.no_seed_by_default
+                    magnet, app_config.download_dir, no_seed=defaults_store.load(app_config).no_seed
                 )
                 flash("Torrent added.", "success")
                 _apply_defaults(result)
@@ -143,7 +163,9 @@ def create_app(
                 if not content:
                     raise ValueError("Uploaded torrent file was empty.")
                 result = _client().add_torrent_file(
-                    content, app_config.download_dir, no_seed=app_config.no_seed_by_default
+                    content,
+                    app_config.download_dir,
+                    no_seed=defaults_store.load(app_config).no_seed,
                 )
                 flash("Torrent file added.", "success")
                 _apply_defaults(result)
@@ -222,19 +244,14 @@ def create_app(
         torrent_id = added.get("id") if isinstance(added, dict) else None
         if not isinstance(torrent_id, int):
             return
+        chosen = defaults_store.load(app_config)
         try:
-            if app_config.default_download_limit_kbps:
-                _client().set_download_limit(
-                    torrent_id, enabled=True, kbps=app_config.default_download_limit_kbps
-                )
-            if app_config.default_upload_limit_kbps and not app_config.no_seed_by_default:
-                _client().set_upload_limit(
-                    torrent_id, enabled=True, kbps=app_config.default_upload_limit_kbps
-                )
-            if app_config.default_seed_ratio and not app_config.no_seed_by_default:
-                _client().set_seed_ratio(
-                    torrent_id, enabled=True, ratio=app_config.default_seed_ratio
-                )
+            if chosen.download_kbps:
+                _client().set_download_limit(torrent_id, enabled=True, kbps=chosen.download_kbps)
+            if chosen.upload_kbps and not chosen.no_seed:
+                _client().set_upload_limit(torrent_id, enabled=True, kbps=chosen.upload_kbps)
+            if chosen.seed_ratio and not chosen.no_seed:
+                _client().set_seed_ratio(torrent_id, enabled=True, ratio=chosen.seed_ratio)
         except TransmissionError as exc:
             flash(f"Torrent added, but its default limits were not applied: {exc}", "error")
 

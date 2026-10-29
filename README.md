@@ -63,6 +63,7 @@ Set any of these in the service environment (see `config/magneto.env.example`):
 | `MAGNETO_DEFAULT_DOWNLOAD_LIMIT_KBPS` | download rate cap, KB/s |
 | `MAGNETO_DEFAULT_UPLOAD_LIMIT_KBPS` | upload rate cap, KB/s |
 | `MAGNETO_DEFAULT_SEED_RATIO` | target seed ratio, greater than 0 |
+| `MAGNETO_SETTINGS_FILE` | where defaults saved from the page are stored (default `~/.local/state/magneto/settings.json`); empty hides the panel |
 | `MAGNETO_NO_SEED_BY_DEFAULT` | `1` disables seeding on new torrents and overrides the upload cap and ratio |
 
 Defaults apply only to a newly added torrent, never to a duplicate, and a

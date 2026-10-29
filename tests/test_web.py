@@ -84,6 +84,7 @@ def _app(tmp_path, fake_client):
             transmission_url="http://example/rpc",
             download_dir=str(tmp_path / "downloads"),
             secret_key="test-secret",
+            settings_file=str(tmp_path / "settings.json"),
         ),
         client=fake_client,
     )
@@ -649,3 +650,73 @@ def test_state_change_allows_loopback_hostname_alias(tmp_path):
 
     assert response.status_code == 302
     assert fake_client.calls == [("pause", 3)]
+
+
+def test_defaults_panel_saves_and_shows_values(tmp_path):
+    app = _app(tmp_path, FakeClient())
+    client = app.test_client()
+    token = _csrf(client)
+    response = client.post(
+        "/settings/defaults",
+        data={
+            "csrf_token": token,
+            "download_kbps": "2048",
+            "upload_kbps": "256",
+            "seed_ratio": "1.5",
+        },
+    )
+    assert response.status_code == 302
+    page = client.get("/").get_data(as_text=True)
+    assert "Defaults for new torrents" in page
+    assert (
+        'name="download_kbps" min="0" max="10000000" step="1" inputmode="numeric" value="2048"'
+        in page
+    )
+    assert 'value="1.5"' in page
+    assert "Defaults for new torrents saved." in page
+
+
+def test_defaults_reject_bad_values_and_keep_the_old_ones(tmp_path):
+    app = _app(tmp_path, FakeClient())
+    client = app.test_client()
+    token = _csrf(client)
+    client.post(
+        "/settings/defaults",
+        data={"csrf_token": token, "download_kbps": "100", "upload_kbps": "", "seed_ratio": ""},
+    )
+    client.post(
+        "/settings/defaults",
+        data={"csrf_token": token, "download_kbps": "fast", "upload_kbps": "", "seed_ratio": ""},
+    )
+    page = client.get("/").get_data(as_text=True)
+    assert "must be a whole number of KB/s" in page
+    assert 'inputmode="numeric" value="100"' in page
+
+
+def test_saved_defaults_apply_to_a_new_torrent(tmp_path):
+    fake = AddingClient({"torrent-added": {"id": 9}})
+    app = _app(tmp_path, fake)
+    client = app.test_client()
+    token = _csrf(client)
+    client.post(
+        "/settings/defaults",
+        data={"csrf_token": token, "download_kbps": "512", "upload_kbps": "64", "seed_ratio": "2"},
+    )
+    client.post("/torrents", data={"csrf_token": token, "magnet": "magnet:?xt=urn:btih:abc"})
+    names = [call[0] for call in fake.calls]
+    assert "set_download_limit" in names and "set_seed_ratio" in names
+
+
+def test_panel_is_hidden_without_a_settings_file(tmp_path):
+    app = create_app(
+        AppConfig(
+            transmission_url="http://example/rpc",
+            download_dir=str(tmp_path),
+            secret_key="s",
+        ),
+        client=FakeClient(),
+    )
+    client = app.test_client()
+    assert "Defaults for new torrents" not in client.get("/").get_data(as_text=True)
+    token = _csrf(client)
+    assert client.post("/settings/defaults", data={"csrf_token": token}).status_code == 404

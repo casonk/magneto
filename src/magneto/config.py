@@ -51,6 +51,8 @@ class AppConfig:
     default_download_limit_kbps: int = 0
     default_upload_limit_kbps: int = 0
     default_seed_ratio: float | None = None
+    # Where defaults saved from the web page live; None disables the page's panel.
+    settings_file: str | None = None
     reannounce_stalled: bool = True
     vpn_interface: str = "nordlynx"
     library_dir: str | None = None
@@ -120,6 +122,7 @@ class AppConfig:
             default_download_limit_kbps=_env_kbps("MAGNETO_DEFAULT_DOWNLOAD_LIMIT_KBPS"),
             default_upload_limit_kbps=_env_kbps("MAGNETO_DEFAULT_UPLOAD_LIMIT_KBPS"),
             default_seed_ratio=_env_ratio("MAGNETO_DEFAULT_SEED_RATIO"),
+            settings_file=_settings_file_from_env(),
             reannounce_stalled=_truthy(os.environ.get("MAGNETO_REANNOUNCE_STALLED", "1")),
             vpn_interface=os.environ.get("MAGNETO_VPN_INTERFACE", "nordlynx"),
             library_dir=os.environ.get("MAGNETO_LIBRARY_DIR") or None,
@@ -133,6 +136,14 @@ class AppConfig:
 
 def _split_csv(value: str) -> tuple[str, ...]:
     return tuple(part.strip() for part in value.split(",") if part.strip())
+
+
+def _settings_file_from_env() -> str | None:
+    configured = os.environ.get("MAGNETO_SETTINGS_FILE")
+    if configured is not None:
+        return configured.strip() or None
+    base = os.environ.get("XDG_STATE_HOME") or str(Path.home() / ".local" / "state")
+    return str(Path(base) / "magneto" / "settings.json")
 
 
 def _env_kbps(name: str) -> int:
