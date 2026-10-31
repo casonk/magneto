@@ -1,17 +1,12 @@
 :root {
-  color-scheme: light dark;
-  --bg: #f7f8f4;
-  --panel: #ffffff;
-  --text: #1b211c;
-  --muted: #667066;
-  --line: #cdd6ca;
-  --accent: #0c7a75;
-  --accent-strong: #085f5b;
-  --danger: #b42318;
-  --danger-bg: #fff1f0;
-  --ok-bg: #edf7ed;
-  --warn-bg: #fff7db;
-  --shadow: 0 1px 3px rgb(16 24 40 / 12%);
+  /* Colours come from the portfolio system theme (/_portfolio/theme.css). */
+  --panel: var(--surface);
+  --line: var(--border);
+  --danger: var(--red);
+  --danger-bg: var(--red-dim);
+  --ok-bg: var(--green-dim);
+  --warn-bg: var(--yellow-dim);
+  --shadow: 0 1px 3px rgb(0 0 0 / 30%);
 }
 
 * {
@@ -89,12 +84,12 @@ button {
   width: 100%;
   border-color: var(--accent);
   background: var(--accent);
-  color: #ffffff;
+  color: var(--accent-ink);
   font-weight: 700;
 }
 
 .danger {
-  border-color: #f1b8b4;
+  border-color: color-mix(in srgb, var(--red) 45%, var(--border));
   background: var(--danger-bg);
   color: var(--danger);
 }
@@ -213,22 +208,22 @@ textarea {
   flex: 0 0 auto;
   border-radius: 999px;
   padding: 5px 9px;
-  color: #ffffff;
-  background: #6f7782;
+  color: var(--accent-ink);
+  background: var(--muted);
   font-size: 0.78rem;
   font-weight: 700;
 }
 
 .status.active {
-  background: var(--accent-strong);
+  background: var(--green);
 }
 
 .status.paused {
-  background: #6d6a2f;
+  background: var(--yellow);
 }
 
 .status.queued {
-  background: #5f5b96;
+  background: var(--purple);
 }
 
 .status.error {
@@ -251,7 +246,7 @@ textarea {
   margin: 13px 0;
   overflow: hidden;
   border-radius: 999px;
-  background: #dde3dc;
+  background: var(--surface2);
 }
 
 .progress div {
@@ -359,24 +354,6 @@ input[type="number"] {
 
   .actions form:last-child {
     grid-column: 1 / -1;
-  }
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --bg: #111611;
-    --panel: #1b231b;
-    --text: #ecf1ec;
-    --muted: #a8b2a7;
-    --line: #354034;
-    --danger-bg: #351413;
-    --ok-bg: #18301f;
-    --warn-bg: #2f2a14;
-    --shadow: 0 1px 3px rgb(0 0 0 / 35%);
-  }
-
-  .progress {
-    background: #313b31;
   }
 }
 

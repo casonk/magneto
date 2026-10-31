@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Follow the portfolio system themes: the page takes its colours from the shared tokens (`/_portfolio/theme.css`), so the theme chosen in the top bar restyles it. The built-in dark-mode media query is gone; the theme replaces it.
+
 - Load the portfolio top bar (`<script src="/_portfolio/chrome.js" defer></script>`, served by the shared Caddy) on the torrent page, so the global navigation and theme rotator appear here too.
 - Stop the torrent list's four-second refresh from discarding a half-made choice: it is
   held while a rate or seed-ratio control is focused or changed, with a note that
