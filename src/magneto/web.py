@@ -26,6 +26,16 @@ from magneto.service import ServiceRestartError, restart_transmission_service
 from magneto.transmission import TransmissionClient, TransmissionError
 
 
+def _portfolio_site():
+    """Where the portfolio theme files come from (resolved per request, so a new link is seen)."""
+    from pathlib import Path
+
+    from magneto.portfolio import site
+
+    here = Path(__file__).resolve()
+    return site.resolve(here.parents[2], vendored=here.parent / "portfolio")
+
+
 def create_app(
     config: AppConfig | None = None,
     client: TransmissionClient | None = None,
@@ -54,6 +64,16 @@ def create_app(
         token = request.form.get("csrf_token") or request.headers.get("X-CSRF-Token")
         if not token or token != session.get("csrf_token"):
             abort(HTTPStatus.FORBIDDEN, description="Missing or invalid CSRF token.")
+
+    @app.get("/_portfolio/<name>")
+    def portfolio_asset(name: str):
+        """The portfolio theme and top bar files, when no Caddy in front answers them."""
+        from flask import Response, abort
+
+        asset = _portfolio_site().asset(name)
+        if asset is None:
+            abort(404)
+        return Response(asset[0], content_type=asset[1], headers={"Cache-Control": "no-cache"})
 
     @app.get("/")
     def index():
