@@ -43,7 +43,7 @@ package-dir = { "" = "src" }
 where = ["src"]
 
 [tool.setuptools.package-data]
-magneto = ["templates/*.html", "static/*.css", "static/*.js"]
+magneto = ["templates/*.html", "static/*.css", "static/*.js", "portfolio/*.css", "portfolio/*.js", "portfolio/*.sha256"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
