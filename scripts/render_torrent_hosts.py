@@ -57,7 +57,10 @@ def render_hosts(
         raise ValueError(
             "current host id may contain only letters, numbers, dot, underscore, and hyphen"
         )
-    import tomllib
+    try:
+        import tomllib
+    except ModuleNotFoundError:  # Python 3.10
+        import tomli as tomllib
 
     data = tomllib.loads(services_path.read_text(encoding="utf-8"))
     local_path = services_path.with_name(services_path.stem + ".local.toml")
