@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- Match the portfolio type scale: take the font, size and monospace stack from the shared theme tokens (`--font`, `--font-size`, `--mono`) so the top bar's font choice applies here, and keep the page heading at the home page's scale.
 - Refuse every request whose `Host` header is not a loopback name, this site's registered hostname (from the portfolio site store), or the host of `MAGNETO_PUBLIC_ORIGIN` / `MAGNETO_ALLOWED_ORIGINS`, before the origin and CSRF checks. A DNS-rebinding page sent its own hostname as both `Host` and `Origin`, passed the same-origin check, and could fetch the CSRF token to add, remove or control torrents. The shared check lives in the vendored portfolio site seam (re-vendored here). **Upgrade note:** a deployment reached under a name that is neither registered nor listed in `MAGNETO_ALLOWED_ORIGINS` will get 403.
 
 - Re-vendor the portfolio theme fallback: the top bar's theme menu offers This site / Everywhere and "Follow the global theme".
