@@ -28,3 +28,8 @@ Unlike `CHATHISTORY.md`, this file should keep only reusable lessons that should
   unit state: a running daemon can stop answering while blocked on storage I/O.
   Keep web restart permission limited to the fixed local Transmission unit and
   alert once per outage and recovery instead of restarting repeatedly.
+- Treat VPN recovery as process-level network recovery, not only tracker
+  recovery: a long-running daemon can retain sockets from the old tunnel.
+  Escalate a failed reannounce or detected interface replacement to one guarded
+  daemon restart, wait for fresh RPC health, and persist a cooldown/incident
+  marker so automation cannot form a restart loop.

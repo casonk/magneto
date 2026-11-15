@@ -234,13 +234,19 @@ tracker state and nft counters, then restores the guard without reject logging.
 ### Recovering torrents after a VPN outage
 
 While the tunnel is down the guard rejects every tracker announce, and
-Transmission backs off for up to two hours, so torrents stay idle long after
-the VPN reconnects. Each `magneto notify` run (every 5 minutes with the user
-timer) reannounces downloading torrents that have no peers, only failed tracker
-announces, and a next announce more than 5 minutes away, but only while
-`MAGNETO_VPN_INTERFACE` (default `nordlynx`) exists. Set
-`MAGNETO_REANNOUNCE_STALLED=0` to turn this off. `magneto notify --dry-run`
-lists what would be reannounced.
+Transmission backs off for up to two hours, and a daemon started before the
+current tunnel can retain stale network sockets. Each `magneto notify` run
+(every 5 minutes with the user timer) reannounces downloading torrents that
+have no peers, only failed tracker announces, and a next announce more than 5
+minutes away, but only while `MAGNETO_VPN_INTERFACE` (default `nordlynx`)
+exists. If the interface was down or replaced, or the same torrents are still
+stalled after that reannounce, recovery restarts Transmission once, waits for
+authenticated RPC health, and reannounces through the fresh daemon. Persistent
+incident state and `MAGNETO_RECOVERY_RESTART_COOLDOWN_SECONDS` (default 900)
+prevent restart loops. State defaults to
+`$XDG_STATE_HOME/magneto/recovery.json`. Set
+`MAGNETO_REANNOUNCE_STALLED=0` to turn recovery off. `magneto notify --dry-run`
+reports whether it would reannounce or restart without changing state.
 
 ### Moving finished downloads into the library
 

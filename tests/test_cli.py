@@ -75,7 +75,7 @@ def test_cli_loads_env_file_before_building_config(dyno_cli, monkeypatch, tmp_pa
 def test_notify_cli_reannounces_stalled_before_notifying(dyno_cli, monkeypatch):
     calls = []
 
-    def fake_reannounce(client, *, vpn_interface, dry_run):
+    def fake_reannounce(client, *, vpn_interface, dry_run, **kwargs):
         calls.append((vpn_interface, dry_run))
         return RecoveryResult(vpn_up=True, reannounced=("Napoleon Dynamite",))
 

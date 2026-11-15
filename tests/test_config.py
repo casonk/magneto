@@ -158,3 +158,21 @@ def test_defaults_are_off_when_unset_and_invalid_values_are_rejected(monkeypatch
         with pytest.raises(ConfigurationError, match=name):
             AppConfig.from_env()
         monkeypatch.delenv(name)
+
+
+def test_recovery_state_and_restart_cooldown_come_from_environment(monkeypatch, tmp_path):
+    state_file = tmp_path / "recovery.json"
+    monkeypatch.setenv("MAGNETO_RECOVERY_STATE_FILE", str(state_file))
+    monkeypatch.setenv("MAGNETO_RECOVERY_RESTART_COOLDOWN_SECONDS", "1200")
+
+    config = AppConfig.from_env()
+
+    assert config.recovery_state_file == str(state_file)
+    assert config.recovery_restart_cooldown_seconds == 1200
+
+
+def test_recovery_restart_cooldown_rejects_invalid_values(monkeypatch):
+    for value in ("soon", "-1"):
+        monkeypatch.setenv("MAGNETO_RECOVERY_RESTART_COOLDOWN_SECONDS", value)
+        with pytest.raises(ConfigurationError, match="MAGNETO_RECOVERY_RESTART_COOLDOWN_SECONDS"):
+            AppConfig.from_env()

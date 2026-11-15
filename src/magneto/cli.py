@@ -12,6 +12,7 @@ from magneto.config import AppConfig, ConfigurationError
 from magneto.library import file_completed
 from magneto.notifications import NotificationError, build_monitor
 from magneto.recovery import reannounce_stalled
+from magneto.service import ServiceRestartError, restart_transmission_service
 from magneto.transmission import TransmissionClient, TransmissionError
 from magneto.web import create_app
 
@@ -102,17 +103,34 @@ def _transmission_client(app_config: AppConfig) -> TransmissionClient:
 
 
 def _recover_stalled(app_config: AppConfig, *, dry_run: bool) -> None:
-    """Reannounce torrents stuck in tracker backoff; never block notifications."""
+    """Recover torrents stuck after VPN failures; never block notifications."""
     client = _transmission_client(app_config)
     try:
-        result = reannounce_stalled(client, vpn_interface=app_config.vpn_interface, dry_run=dry_run)
-    except TransmissionError as exc:
+        result = reannounce_stalled(
+            client,
+            vpn_interface=app_config.vpn_interface,
+            dry_run=dry_run,
+            state_file=(
+                Path(app_config.recovery_state_file).expanduser()
+                if app_config.recovery_state_file
+                else None
+            ),
+            restart_service=restart_transmission_service,
+            client_factory=lambda: _transmission_client(app_config),
+            restart_cooldown=app_config.recovery_restart_cooldown_seconds,
+        )
+    except (OSError, ServiceRestartError, TransmissionError, TimeoutError) as exc:
         print(f"stalled torrent recovery failed: {exc}", file=sys.stderr)
         return
     if not result.vpn_up:
         print(f"stalled torrent recovery skipped: {app_config.vpn_interface} is down")
     elif result.reannounced:
-        verb = "would reannounce" if dry_run else "reannounced"
+        if result.would_restart:
+            verb = "would restart Transmission and reannounce"
+        elif result.restarted:
+            verb = "restarted Transmission and reannounced"
+        else:
+            verb = "would reannounce" if dry_run else "reannounced"
         print(f"{verb} {len(result.reannounced)} stalled: {', '.join(result.reannounced)}")
 
 
