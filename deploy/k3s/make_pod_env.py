@@ -1,12 +1,14 @@
-"""Turn the host's magneto settings into the environment file for the pod's Secret.
+"""Turn the host's magneto settings into the files for the pod's Secret.
 
 The pod cannot reach the vault, so Transmission's credentials are resolved here, on the host, with magneto's own
 loader (``AppConfig.from_env``). Only an allow-list of settings is copied; vault entry names, notification and
 library settings and the host's loopback URL never reach the cluster.
 
-    make_pod_env.py ENV_FILE RPC_IP OUT_FILE
+    make_pod_env.py ENV_FILE RPC_IP OUT_DIR
 
-writes OUT_FILE (mode 0600) and prints only what it wrote, never a value.
+writes one file per setting into OUT_DIR (files mode 0600, the name is the variable, the content is the exact value) and
+prints only the names, never a value. A directory rather than an env file, because `kubectl create secret
+--from-env-file` keeps quotes literally and mangles a password with spaces, quotes or backslashes.
 """
 
 from __future__ import annotations
@@ -29,7 +31,6 @@ COPIED = (
     "MAGNETO_REQUEST_TIMEOUT",
     "MAGNETO_MAX_TORRENT_UPLOAD_BYTES",
 )
-_PLAIN = re.compile(r"^[^\s\"'\\]*$")
 
 
 def parse(text: str) -> dict[str, str]:
@@ -58,7 +59,7 @@ def build(
 
 
 def main(argv: list[str]) -> int:
-    env_file, rpc_ip, out_file = argv
+    env_file, rpc_ip, out_dir = argv
     try:
         settings = parse(Path(env_file).read_text(encoding="utf-8"))
     except OSError:
@@ -72,6 +73,10 @@ def main(argv: list[str]) -> int:
     saved = dict(os.environ)
     os.environ.clear()
     os.environ.update({k: v for k, v in settings.items() if k.startswith("MAGNETO_")})
+    # Where the vault client lives can be overridden by the caller (the default is the sibling checkout).
+    for key in ("MAGNETO_AUTO_PASS_ROOT", "MAGNETO_AUTO_PASS_ENV_FILE"):
+        if saved.get(key):
+            os.environ[key] = saved[key]
     try:
         from magneto.config import AppConfig, ConfigurationError
 
@@ -84,18 +89,12 @@ def main(argv: list[str]) -> int:
         os.environ.clear()
         os.environ.update(saved)
     env = build(settings, rpc_ip, config.username, config.password)
-    bad = [k for k, v in env.items() if not _PLAIN.match(v) or "\n" in v]
-    if bad:
-        # kubectl's --from-env-file keeps quotes literally; refuse a value it would mangle rather than ship it.
-        print(
-            f"these settings contain whitespace or quotes the Secret file cannot carry: {', '.join(sorted(bad))}",
-            file=sys.stderr,
-        )
-        return 1
-    fd = os.open(out_file, os.O_WRONLY | os.O_CREAT | os.O_TRUNC, 0o600)
-    with os.fdopen(fd, "w", encoding="utf-8") as stream:
-        for key in sorted(env):
-            stream.write(f"{key}={env[key]}\n")
+    out = Path(out_dir)
+    out.mkdir(parents=True, exist_ok=True)
+    for key, value in env.items():
+        fd = os.open(out / key, os.O_WRONLY | os.O_CREAT | os.O_TRUNC, 0o600)
+        with os.fdopen(fd, "w", encoding="utf-8", newline="") as stream:
+            stream.write(value)
     print(f"wrote {len(env)} settings: {', '.join(sorted(env))}")
     return 0
 

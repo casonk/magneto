@@ -18,10 +18,10 @@ RPC_IP="$("$HERE/rpc-proxy.sh" ip)"
 
 SECRET_DIR="$(mktemp -d "${XDG_RUNTIME_DIR:-/tmp}/magneto-k3s.XXXXXX")"; chmod 700 "$SECRET_DIR"
 trap 'rm -rf "$SECRET_DIR"' EXIT
-"$PYTHON" -I "$HERE/make_pod_env.py" "$ENV_FILE" "$RPC_IP" "$SECRET_DIR/env"
+"$PYTHON" -I "$HERE/make_pod_env.py" "$ENV_FILE" "$RPC_IP" "$SECRET_DIR/files"
 
 kubectl apply -f "$HERE/manifests/00-namespace.yaml"
-kubectl -n magneto create secret generic magneto-env --from-env-file="$SECRET_DIR/env" \
+kubectl -n magneto create secret generic magneto-env --from-file="$SECRET_DIR/files" \
   --dry-run=client -o yaml | kubectl apply -f -
 kubectl apply -f "$HERE/manifests/30-network-policy.yaml"
 kubectl apply -f "$HERE/manifests/20-deployment.yaml"

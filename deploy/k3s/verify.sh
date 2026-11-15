@@ -44,6 +44,8 @@ probe closed "the host's web UI port, other address"   "$NODE_IP" 5400
 probe closed "internet by address"                     1.1.1.1 443
 probe closed "link-local metadata"                     169.254.169.254 80
 probe closed "Kubernetes API"                          10.43.0.1 443
+probe closed "Kubernetes API on the node address"      "$NODE_IP" 6443
+probe closed "Kubernetes API on the pod-network address" "$RPC_IP" 6443
 probe closed "in-cluster registry"                     10.43.0.50 5000
 probe closed "another service's pod (locality)"        10.43.0.60 5434
 

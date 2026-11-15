@@ -380,7 +380,11 @@ def test_the_pod_may_reach_only_the_hosts_transmission_port():
     # stays closed by the default-deny the egress rule creates, and verify.sh probes the ones that matter.
     text = (REPO / "deploy" / "k3s" / "manifests" / "30-network-policy.yaml").read_text()
     deny = text[text.index("egressDeny:") : text.index("egress:\n")]
-    assert "world" in deny and "kube-apiserver" in deny and "host" not in deny
+    # `cluster` and `kube-apiserver` both include the host on this node, so denying either would also deny the one
+    # allowed port (found the hard way); the default-deny and verify.sh's probes cover them instead.
+    entities = deny.split("toEntities:")[1].split("]")[0]
+    assert "world" in entities and "host" not in entities
+    assert "cluster" not in entities and "kube-apiserver" not in entities
     allow = text[text.rindex("egress:\n") :]
     assert allow.count("toEntities") == 1 and "[host]" in allow
     assert 'port: "9091"' in allow and allow.count("port:") == 1

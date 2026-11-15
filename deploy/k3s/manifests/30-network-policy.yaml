@@ -1,9 +1,10 @@
 # Only the node may connect (the forwarder behind host Caddy), and the pod may reach exactly one thing: the host's
 # Transmission RPC port, through the forwarder on the node's pod-network address. Everything else is denied: no
 # internet, no DNS (the RPC URL is an address), no cluster services, no other host port.
-# Deny rules win in Cilium, so the explicit denies hold even if an allow is added later by mistake. `host` is
-# deliberately not in the deny list (that would also deny the one port the pod needs); the default-deny that any
-# egress rule creates keeps every other host port closed, and verify.sh probes the ones that matter.
+# Deny rules win in Cilium, so the explicit denies hold even if an allow is added later by mistake. `host` (and
+# `cluster` and `kube-apiserver`, which include it) is deliberately not in the deny list: that would also deny the one port the pod
+# needs. The default-deny that any egress rule creates keeps every other host port, pod and service closed, and
+# verify.sh probes the ones that matter.
 apiVersion: cilium.io/v2
 kind: CiliumNetworkPolicy
 metadata:
@@ -17,7 +18,10 @@ spec:
       toPorts:
         - ports: [{port: "5400", protocol: TCP}]
   egressDeny:
-    - toEntities: [world, cluster, remote-node, kube-apiserver, health]
+    # Not `cluster` and not `kube-apiserver`: both include the host here (the API server runs on this node), and a deny
+    # beats the one allow below. Other pods, services and the API server's own port are closed by the default-deny the
+    # egress rule creates, and verify.sh probes them.
+    - toEntities: [world, remote-node, health]
     - toCIDR: ["169.254.0.0/16"]
   egress:
     - toEntities: [host]

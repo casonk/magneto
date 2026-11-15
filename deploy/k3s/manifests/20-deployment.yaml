@@ -38,8 +38,10 @@ spec:
             - {name: MAGNETO_RESTART_ENABLED, value: "0"}
           envFrom:
             - secretRef: {name: magneto-env}   # Transmission credentials, session key and origins, from the host
+          # The app refuses any Host that is not loopback or its registered name (a DNS-rebinding guard), so the
+          # probe presents itself as loopback rather than the pod's address.
           readinessProbe:
-            httpGet: {path: /healthz, port: http}
+            httpGet: {path: /healthz, port: http, httpHeaders: [{name: Host, value: "127.0.0.1"}]}
           resources:
             requests: {cpu: 20m, memory: 64Mi}
             limits: {memory: 256Mi}
