@@ -4,6 +4,7 @@
 [repository]
 # One line shown on GitHub. Keep it free of private repository names and local paths.
 description = "Private iPhone-friendly torrent control for Snowbridge share via Transmission RPC"
+topics = ["transmission", "torrent", "flask", "python", "web-ui", "home-server", "k3s"]
 
 [main_branch]
 # Direct commits and pushes to main are refused unless this is true.
