@@ -2,7 +2,12 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 
-from magneto.recovery import is_stalled, reannounce_stalled, vpn_interface_up
+from magneto.recovery import (
+    is_stalled,
+    reannounce_stalled,
+    vpn_interface_identity,
+    vpn_interface_up,
+)
 
 NOW = 1_000_000
 
@@ -104,3 +109,110 @@ def test_vpn_interface_up_checks_sysfs(tmp_path):
     assert vpn_interface_up("nordlynx", tmp_path)
     assert not vpn_interface_up("wg9", tmp_path)
     assert vpn_interface_up("", tmp_path)
+
+
+def test_vpn_interface_identity_reads_kernel_index(tmp_path):
+    interface = tmp_path / "nordlynx"
+    interface.mkdir()
+    (interface / "ifindex").write_text("42\n", encoding="utf-8")
+
+    assert vpn_interface_identity("nordlynx", tmp_path) == "42"
+    assert vpn_interface_identity("wg9", tmp_path) is None
+
+
+def test_second_failed_reannounce_restarts_once_and_uses_fresh_client(tmp_path):
+    state_file = tmp_path / "recovery.json"
+    first = FakeClient([_torrent(1)])
+    reannounce_stalled(
+        first,
+        vpn_interface="nordlynx",
+        state_file=state_file,
+        restart_service=lambda: None,
+        client_factory=lambda: first,
+        clock=lambda: NOW,
+        interface_identity=lambda _i: "7",
+    )
+    assert first.reannounced == [1]
+
+    stale = FakeClient([_torrent(1)])
+    fresh = FakeClient([_torrent(1)])
+    restarts = []
+    result = reannounce_stalled(
+        stale,
+        vpn_interface="nordlynx",
+        state_file=state_file,
+        restart_service=lambda: restarts.append(True),
+        client_factory=lambda: fresh,
+        clock=lambda: NOW + 301,
+        interface_identity=lambda _i: "7",
+        sleeper=lambda _seconds: None,
+    )
+
+    assert result.restarted
+    assert restarts == [True]
+    assert stale.reannounced == []
+    assert fresh.reannounced == [1]
+
+    third = FakeClient([_torrent(1)])
+    result = reannounce_stalled(
+        third,
+        vpn_interface="nordlynx",
+        state_file=state_file,
+        restart_service=lambda: restarts.append(True),
+        client_factory=lambda: third,
+        clock=lambda: NOW + 602,
+        interface_identity=lambda _i: "7",
+    )
+    assert not result.restarted
+    assert restarts == [True]
+
+
+def test_vpn_reconnect_restarts_stalled_daemon_immediately(tmp_path):
+    state_file = tmp_path / "recovery.json"
+    result = reannounce_stalled(
+        FakeClient([]),
+        vpn_interface="nordlynx",
+        state_file=state_file,
+        interface_identity=lambda _i: None,
+    )
+    assert not result.vpn_up
+
+    fresh = FakeClient([_torrent(4)])
+    restarts = []
+    result = reannounce_stalled(
+        FakeClient([_torrent(4)]),
+        vpn_interface="nordlynx",
+        state_file=state_file,
+        restart_service=lambda: restarts.append(True),
+        client_factory=lambda: fresh,
+        clock=lambda: NOW,
+        interface_identity=lambda _i: "9",
+        sleeper=lambda _seconds: None,
+    )
+
+    assert result.restarted
+    assert restarts == [True]
+    assert fresh.reannounced == [4]
+
+
+def test_dry_run_reports_restart_without_mutating_state(tmp_path):
+    state_file = tmp_path / "recovery.json"
+    state_file.write_text(
+        '{"vpn_up":false,"interface_identity":"7","stalled_ids":[],"last_restart_at":null}\n',
+        encoding="utf-8",
+    )
+    original = state_file.read_text(encoding="utf-8")
+
+    result = reannounce_stalled(
+        FakeClient([_torrent(1)]),
+        vpn_interface="nordlynx",
+        state_file=state_file,
+        restart_service=lambda: None,
+        client_factory=lambda: FakeClient([]),
+        dry_run=True,
+        clock=lambda: NOW,
+        interface_identity=lambda _i: "8",
+    )
+
+    assert result.would_restart
+    assert state_file.read_text(encoding="utf-8") == original

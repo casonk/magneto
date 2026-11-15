@@ -55,6 +55,8 @@ class AppConfig:
     settings_file: str | None = None
     reannounce_stalled: bool = True
     vpn_interface: str = "nordlynx"
+    recovery_state_file: str | None = None
+    recovery_restart_cooldown_seconds: int = 900
     library_dir: str | None = None
     torrent_hosts: tuple[TorrentHost, ...] = ()
 
@@ -125,6 +127,12 @@ class AppConfig:
             settings_file=_settings_file_from_env(),
             reannounce_stalled=_truthy(os.environ.get("MAGNETO_REANNOUNCE_STALLED", "1")),
             vpn_interface=os.environ.get("MAGNETO_VPN_INTERFACE", "nordlynx"),
+            recovery_state_file=_state_file_from_env(
+                "MAGNETO_RECOVERY_STATE_FILE", "recovery.json"
+            ),
+            recovery_restart_cooldown_seconds=_env_nonnegative_int(
+                "MAGNETO_RECOVERY_RESTART_COOLDOWN_SECONDS", 900
+            ),
             library_dir=os.environ.get("MAGNETO_LIBRARY_DIR") or None,
             torrent_hosts=_torrent_hosts_from_env(),
         )
@@ -144,6 +152,25 @@ def _settings_file_from_env() -> str | None:
         return configured.strip() or None
     base = os.environ.get("XDG_STATE_HOME") or str(Path.home() / ".local" / "state")
     return str(Path(base) / "magneto" / "settings.json")
+
+
+def _state_file_from_env(name: str, filename: str) -> str | None:
+    configured = os.environ.get(name)
+    if configured is not None:
+        return configured.strip() or None
+    base = os.environ.get("XDG_STATE_HOME") or str(Path.home() / ".local" / "state")
+    return str(Path(base) / "magneto" / filename)
+
+
+def _env_nonnegative_int(name: str, default: int) -> int:
+    raw = os.environ.get(name, str(default)).strip()
+    try:
+        value = int(raw)
+    except ValueError as exc:
+        raise ConfigurationError(f"{name} must be a whole number of seconds") from exc
+    if value < 0:
+        raise ConfigurationError(f"{name} must be at least 0 seconds")
+    return value
 
 
 def _env_kbps(name: str) -> int:

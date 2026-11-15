@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+- Escalate VPN-outage recovery from one tracker reannounce to a guarded
+  Transmission restart when the tunnel was recreated or the same torrents
+  remain stalled. Recovery waits for fresh RPC health, reannounces through a
+  new client, and persists incident/cooldown state to prevent restart loops.
 - Match the portfolio type scale: take the font, size and monospace stack from the shared theme tokens (`--font`, `--font-size`, `--mono`) so the top bar's font choice applies here, and keep the page heading at the home page's scale.
 - Refuse every request whose `Host` header is not a loopback name, this site's registered hostname (from the portfolio site store), or the host of `MAGNETO_PUBLIC_ORIGIN` / `MAGNETO_ALLOWED_ORIGINS`, before the origin and CSRF checks. A DNS-rebinding page sent its own hostname as both `Host` and `Origin`, passed the same-origin check, and could fetch the CSRF token to add, remove or control torrents. The shared check lives in the vendored portfolio site seam (re-vendored here). **Upgrade note:** a deployment reached under a name that is neither registered nor listed in `MAGNETO_ALLOWED_ORIGINS` will get 403.
 
