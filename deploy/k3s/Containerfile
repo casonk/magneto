@@ -1,0 +1,13 @@
+# The magneto web UI image: the package and its two libraries, nothing from the owner's files or settings.
+# It is stateless (every setting arrives through the pod's Secret) and holds no vault client, so it runs as an
+# unprivileged uid with a read-only root filesystem; /tmp is the only writable mount.
+FROM docker.io/library/python:3.12-slim
+WORKDIR /app
+COPY pyproject.toml README.md /app/
+COPY src /app/src
+RUN pip install --no-cache-dir .
+ENV PYTHONDONTWRITEBYTECODE=1 PYTHONUNBUFFERED=1
+USER 10001:10001
+EXPOSE 5400
+ENTRYPOINT ["magneto"]
+CMD ["web"]

@@ -1,0 +1,8 @@
+[Unit]
+Description=magneto on loopback, forwarded into K3s
+
+[Socket]
+ListenStream=127.0.0.1:5400
+
+[Install]
+WantedBy=sockets.target

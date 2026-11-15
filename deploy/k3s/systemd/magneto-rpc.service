@@ -1,0 +1,11 @@
+[Unit]
+Description=Forward the pod network's Transmission RPC port to the host's loopback RPC
+Requires=magneto-rpc.socket
+After=magneto-rpc.socket
+StartLimitIntervalSec=0
+
+[Service]
+# Transmission only accepts RPC from loopback (its whitelist), so the pod's request arrives from 127.0.0.1.
+# No --exit-idle-time: the forwarder stays up.
+ExecStart=/usr/lib/systemd/systemd-socket-proxyd 127.0.0.1:9091
+PrivateTmp=yes

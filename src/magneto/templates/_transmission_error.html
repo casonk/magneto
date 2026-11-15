@@ -1,7 +1,9 @@
 <section class="message error" role="alert">
   <p>{{ status_error }}</p>
+  {% if restart_enabled %}
   <form method="post" action="{{ url_for('restart_transmission') }}">
     <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
     <button type="submit">Restart Transmission service</button>
   </form>
+  {% endif %}
 </section>

@@ -1,0 +1,67 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: magneto-web
+  namespace: magneto
+spec:
+  replicas: 1
+  strategy: {type: Recreate}
+  selector:
+    matchLabels: {app: magneto-web}
+  template:
+    metadata:
+      labels: {app: magneto-web}
+    spec:
+      automountServiceAccountToken: false
+      enableServiceLinks: false
+      terminationGracePeriodSeconds: 5   # Flask as PID 1 ignores SIGTERM; do not wait out the default 30s
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 10001
+        runAsGroup: 10001
+        seccompProfile: {type: RuntimeDefault}
+      containers:
+        - name: web
+          image: localhost:5000/magneto:k3s
+          imagePullPolicy: Always
+          args: ["web"]
+          ports: [{name: http, containerPort: 5400}]
+          env:
+            # The pod listens on its own address; Cilium admits only the node (the host forwarder), so the app's
+            # "bind to loopback" guard is lifted deliberately and only here.
+            - {name: MAGNETO_HOST, value: "0.0.0.0"}
+            - {name: MAGNETO_PORT, value: "5400"}
+            - {name: MAGNETO_ALLOW_REMOTE, value: "1"}
+            # Notifications, recovery and the library move run from the host timer; the web page needs none.
+            - {name: MAGNETO_NOTIFY_ENABLED, value: "0"}
+            # The restart button runs `sudo systemctl` on the host, which a pod can neither do nor be given.
+            - {name: MAGNETO_RESTART_ENABLED, value: "0"}
+          envFrom:
+            - secretRef: {name: magneto-env}   # Transmission credentials, session key and origins, from the host
+          # The app refuses any Host that is not loopback or its registered name (a DNS-rebinding guard), so the
+          # probe presents itself as loopback rather than the pod's address.
+          readinessProbe:
+            httpGet: {path: /healthz, port: http, httpHeaders: [{name: Host, value: "127.0.0.1"}]}
+          resources:
+            requests: {cpu: 20m, memory: 64Mi}
+            limits: {memory: 256Mi}
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities: {drop: [ALL]}
+          volumeMounts:
+            - {name: tmp, mountPath: /tmp}
+      volumes:
+        - name: tmp
+          emptyDir: {sizeLimit: 16Mi}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: magneto-web
+  namespace: magneto
+spec:
+  type: ClusterIP
+  clusterIP: 10.43.0.62   # fixed: the host-side forwarder names it
+  selector: {app: magneto-web}
+  ports: [{name: http, port: 5400, targetPort: http}]
