@@ -1,0 +1,11 @@
+[Unit]
+Description=Transmission RPC for the magneto pod (on the node's pod-network address only)
+
+[Socket]
+# __RPC_IP__ is the node's address on the pod network (cilium_host), filled in by rpc-proxy.sh. FreeBind lets the
+# socket come up at login before K3s has created the interface. Only that address listens: not the LAN, not loopback.
+ListenStream=__RPC_IP__:9091
+FreeBind=yes
+
+[Install]
+WantedBy=sockets.target

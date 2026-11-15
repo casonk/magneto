@@ -1,0 +1,27 @@
+# A short-lived pod with the web pod's labels and security context, for verify.sh's egress probes only.
+apiVersion: v1
+kind: Pod
+metadata:
+  name: magneto-verify
+  namespace: magneto
+  labels: {app: magneto-web}
+spec:
+  restartPolicy: Never
+  terminationGracePeriodSeconds: 0   # its sleep ignores SIGTERM; die at once so the next run can reuse the name
+  automountServiceAccountToken: false
+  enableServiceLinks: false
+  activeDeadlineSeconds: 300
+  securityContext:
+    runAsNonRoot: true
+    runAsUser: 10001
+    runAsGroup: 10001
+    seccompProfile: {type: RuntimeDefault}
+  containers:
+    - name: verify
+      image: localhost:5000/magneto:k3s
+      imagePullPolicy: Always
+      command: ["sleep", "300"]
+      securityContext:
+        allowPrivilegeEscalation: false
+        readOnlyRootFilesystem: true
+        capabilities: {drop: [ALL]}

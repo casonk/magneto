@@ -54,6 +54,10 @@ def create_app(
     )
     app.config["MAGNETO_RESTART_SERVICE"] = restart_service
 
+    @app.context_processor
+    def _restart_button_visibility() -> dict[str, bool]:
+        return {"restart_enabled": app_config.restart_enabled}
+
     @app.before_request
     def _refuse_unexpected_host() -> None:
         """DNS-rebinding guard: only loopback, this site's registered name or a configured origin.
@@ -170,6 +174,13 @@ def create_app(
 
     @app.post("/transmission/restart")
     def restart_transmission():
+        if not app_config.restart_enabled:
+            flash(
+                "Restarting Transmission is not available when magneto runs in K3s. "
+                "Restart it on the host: systemctl restart transmission-daemon.",
+                "error",
+            )
+            return redirect(url_for("index"))
         try:
             app.config["MAGNETO_RESTART_SERVICE"]()
             flash("Transmission restart requested. Refresh in a few seconds.", "success")

@@ -13,6 +13,13 @@ cancel torrents from a touch-friendly web UI.
 Downloads always go to the configured Snowbridge directory. The browser cannot
 override the destination path.
 
+## Ways to run it
+
+One command, one setting: `deploy/deploy.sh up`. The mode is `dev` (the default, no cluster), `host` (systemd) or
+`k3s` (K3s, optional). Only `k3s` needs a cluster, and switching never moves your data. Choose with `--mode`,
+`config/deploy.example.env` copied to `config/deploy.local.env`, or the environment. Full guide:
+[`docs/deployment.md`](docs/deployment.md).
+
 ## Install
 
 ```bash

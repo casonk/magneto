@@ -59,6 +59,9 @@ class AppConfig:
     recovery_restart_cooldown_seconds: int = 900
     library_dir: str | None = None
     torrent_hosts: tuple[TorrentHost, ...] = ()
+    # The restart button runs `sudo systemctl` on the host. A pod can neither do that nor should be given it, so the
+    # K3s deployment turns the button off (MAGNETO_RESTART_ENABLED=0).
+    restart_enabled: bool = True
 
     @classmethod
     def from_env(cls) -> AppConfig:
@@ -126,6 +129,7 @@ class AppConfig:
             default_seed_ratio=_env_ratio("MAGNETO_DEFAULT_SEED_RATIO"),
             settings_file=_settings_file_from_env(),
             reannounce_stalled=_truthy(os.environ.get("MAGNETO_REANNOUNCE_STALLED", "1")),
+            restart_enabled=_truthy(os.environ.get("MAGNETO_RESTART_ENABLED", "1")),
             vpn_interface=os.environ.get("MAGNETO_VPN_INTERFACE", "nordlynx"),
             recovery_state_file=_state_file_from_env(
                 "MAGNETO_RECOVERY_STATE_FILE", "recovery.json"

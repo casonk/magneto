@@ -720,3 +720,57 @@ def test_panel_is_hidden_without_a_settings_file(tmp_path):
     assert "Defaults for new torrents" not in client.get("/").get_data(as_text=True)
     token = _csrf(client)
     assert client.post("/settings/defaults", data={"csrf_token": token}).status_code == 404
+
+
+def _app_without_restart(tmp_path, fake_client, calls):
+    return create_app(
+        AppConfig(
+            "http://example/rpc",
+            str(tmp_path / "downloads"),
+            "test-secret",
+            restart_enabled=False,
+        ),
+        client=fake_client,
+        restart_service=lambda: calls.append("restart"),
+    )
+
+
+def test_the_restart_button_is_hidden_when_restart_is_disabled(tmp_path):
+    class UnavailableClient(FakeClient):
+        def list_torrents(self):
+            raise TransmissionError("RPC timed out")
+
+    app = _app_without_restart(tmp_path, UnavailableClient(), [])
+    response = app.test_client().get("/torrents/fragment")
+    text = response.get_data(as_text=True)
+
+    assert response.status_code == 502
+    assert "RPC timed out" in text
+    assert "/transmission/restart" not in text
+
+
+def test_a_restart_request_is_refused_with_a_clear_message_when_disabled(tmp_path):
+    calls = []
+    app = _app_without_restart(tmp_path, FakeClient(), calls)
+    client = app.test_client()
+    token = _csrf(client)
+
+    response = client.post(
+        "/transmission/restart",
+        data={"csrf_token": token},
+        headers={"Origin": "http://localhost"},
+        follow_redirects=True,
+    )
+
+    assert response.status_code == 200
+    assert "not available when magneto runs in K3s" in response.get_data(as_text=True)
+    assert calls == []
+
+
+def test_restart_is_enabled_by_default_and_the_environment_can_turn_it_off(monkeypatch):
+    assert AppConfig("http://example/rpc", "/tmp/d", "k").restart_enabled is True
+    monkeypatch.setenv("MAGNETO_SECRET_KEY", "k")
+    monkeypatch.setenv("MAGNETO_DOWNLOAD_DIR", "/tmp/d")
+    monkeypatch.setenv("MAGNETO_TRANSMISSION_URL", "http://example/rpc")
+    monkeypatch.setenv("MAGNETO_RESTART_ENABLED", "0")
+    assert AppConfig.from_env().restart_enabled is False

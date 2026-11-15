@@ -1,0 +1,25 @@
+# Only the node may connect (the forwarder behind host Caddy), and the pod may reach exactly one thing: the host's
+# Transmission RPC port, through the forwarder on the node's pod-network address. Everything else is denied: no
+# internet, no DNS (the RPC URL is an address), no cluster services, no other host port.
+# Deny rules win in Cilium, so the explicit denies hold even if an allow is added later by mistake. `host` is
+# deliberately not in the deny list (that would also deny the one port the pod needs); the default-deny that any
+# egress rule creates keeps every other host port closed, and verify.sh probes the ones that matter.
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: magneto-web
+  namespace: magneto
+spec:
+  endpointSelector:
+    matchLabels: {app: magneto-web}
+  ingress:
+    - fromEntities: [host]
+      toPorts:
+        - ports: [{port: "5400", protocol: TCP}]
+  egressDeny:
+    - toEntities: [world, cluster, remote-node, kube-apiserver, health]
+    - toCIDR: ["169.254.0.0/16"]
+  egress:
+    - toEntities: [host]
+      toPorts:
+        - ports: [{port: "9091", protocol: TCP}]
