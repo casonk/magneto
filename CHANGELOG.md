@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+- Make destructive torrent actions explicit: **Cancel and delete files** now needs a confirmation
+  checkbox (the server refuses without it) and **Remove (keep files)** is labelled as such.
+  Removing a finished torrent warns that its files stay in the download folder until filed.
+
 - Escalate VPN-outage recovery from one tracker reannounce to a guarded
   Transmission restart when the tunnel was recreated or the same torrents
   remain stalled. Recovery waits for fresh RPC health, reannounces through a

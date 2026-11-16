@@ -33,6 +33,9 @@ Unlike `CHATHISTORY.md`, this file should keep only reusable lessons that should
   Escalate a failed reannounce or detected interface replacement to one guarded
   daemon restart, wait for fresh RPC health, and persist a cooldown/incident
   marker so automation cannot form a restart loop.
+- Two adjacent buttons that differ only by whether files are deleted ("Remove" vs "Cancel") are an
+  accident waiting to happen. Label the consequence, and make the server require an explicit
+  confirmation for the irreversible one rather than trusting the UI.
 
 ### 2026-11-15 — Running only the web UI in K3s while Transmission stays on the host
 
