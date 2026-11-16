@@ -298,7 +298,10 @@ def create_app(
         """The torrent's record when it is fully downloaded, else None (best effort)."""
         try:
             for torrent in _client().list_torrents():
-                if torrent.get("id") == torrent_id and float(torrent.get("percentValue") or 0) >= 100:
+                if (
+                    torrent.get("id") == torrent_id
+                    and float(torrent.get("percentValue") or 0) >= 100
+                ):
                     return torrent
         except Exception:  # advisory only; never block the removal
             return None
