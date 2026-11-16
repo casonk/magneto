@@ -266,9 +266,26 @@ def create_app(
                 _client().restart(torrent_id)
                 flash("Torrent restarted.", "success")
             elif action == "remove":
+                finished = _finished_torrent(torrent_id)
                 _client().remove(torrent_id, delete_local_data=False)
-                flash("Torrent removed from Transmission.", "success")
+                if finished:
+                    flash(
+                        f"Removed {finished['name']} from Transmission. Its files were kept in "
+                        "the download folder; they reach the library only when the "
+                        "episode-filing job (or 'File completed episodes') links them.",
+                        "warning",
+                    )
+                else:
+                    flash("Torrent removed from Transmission.", "success")
             elif action == "cancel":
+                if request.form.get("confirm") != "delete-data":
+                    flash(
+                        "Nothing was deleted. Cancel permanently deletes the downloaded "
+                        "files; tick the confirmation box to proceed, or use Remove to "
+                        "keep the files.",
+                        "error",
+                    )
+                    return redirect(url_for("index"))
                 _client().remove(torrent_id, delete_local_data=True)
                 flash("Torrent cancelled and local data deleted.", "success")
             else:
@@ -276,6 +293,16 @@ def create_app(
         except TransmissionError as exc:
             flash(str(exc), "error")
         return redirect(url_for("index"))
+
+    def _finished_torrent(torrent_id: int) -> dict | None:
+        """The torrent's record when it is fully downloaded, else None (best effort)."""
+        try:
+            for torrent in _client().list_torrents():
+                if torrent.get("id") == torrent_id and float(torrent.get("percentValue") or 0) >= 100:
+                    return torrent
+        except Exception:  # advisory only; never block the removal
+            return None
+        return None
 
     def _client() -> TransmissionClient:
         return app.config["MAGNETO_CLIENT"]

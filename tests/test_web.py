@@ -297,12 +297,46 @@ def test_cancel_deletes_local_data(tmp_path):
 
     response = client.post(
         "/torrents/3/cancel",
-        data={"csrf_token": token},
+        data={"csrf_token": token, "confirm": "delete-data"},
         headers={"Origin": "http://localhost"},
     )
 
     assert response.status_code == 302
     assert fake_client.calls == [("remove", 3, True)]
+
+
+def test_cancel_without_confirmation_deletes_nothing(tmp_path):
+    fake_client = FakeClient()
+    app = _app(tmp_path, fake_client)
+    client = app.test_client()
+    token = _csrf(client)
+
+    response = client.post(
+        "/torrents/3/cancel",
+        data={"csrf_token": token},
+        headers={"Origin": "http://localhost"},
+    )
+
+    assert response.status_code == 302
+    assert fake_client.calls == []
+
+
+def test_remove_of_finished_torrent_warns_files_are_unfiled(tmp_path):
+    fake_client = FakeClient()
+    fake_client.list_torrents = lambda: [{"id": 3, "name": "Show.S01", "percentValue": 100.0}]
+    app = _app(tmp_path, fake_client)
+    client = app.test_client()
+    token = _csrf(client)
+
+    response = client.post(
+        "/torrents/3/remove",
+        data={"csrf_token": token},
+        headers={"Origin": "http://localhost"},
+        follow_redirects=True,
+    )
+
+    assert fake_client.calls == [("remove", 3, False)]
+    assert b"Show.S01" in response.data and b"kept in" in response.data
 
 
 def test_remove_keeps_local_data(tmp_path):

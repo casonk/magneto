@@ -152,11 +152,12 @@
         </form>
         <form method="post" action="{{ url_for('torrent_action', torrent_id=torrent.id, action='remove') }}">
           <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
-          <button type="submit">Remove</button>
+          <button type="submit" title="Stop tracking the torrent; the downloaded files stay on disk">Remove (keep files)</button>
         </form>
         <form method="post" action="{{ url_for('torrent_action', torrent_id=torrent.id, action='cancel') }}">
           <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
-          <button class="danger" type="submit">Cancel</button>
+          <label><input type="checkbox" name="confirm" value="delete-data" required> permanently delete the downloaded files</label>
+          <button class="danger" type="submit">Cancel and delete files</button>
         </form>
       </div>
     </article>
