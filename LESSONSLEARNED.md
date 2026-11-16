@@ -1,6 +1,6 @@
 # LESSONSLEARNED.md
 
-Tracked durable lessons for `<repo-name>`.
+Tracked durable lessons for `magneto`.
 Unlike `CHATHISTORY.md`, this file should keep only reusable lessons that should change how future sessions work in this repo.
 
 ## How To Use
@@ -36,3 +36,14 @@ Unlike `CHATHISTORY.md`, this file should keep only reusable lessons that should
 - Two adjacent buttons that differ only by whether files are deleted ("Remove" vs "Cancel") are an
   accident waiting to happen. Label the consequence, and make the server require an explicit
   confirmation for the irreversible one rather than trusting the UI.
+
+### 2026-11-15 — Running only the web UI in K3s while Transmission stays on the host
+
+- Transmission listens on loopback and accepts RPC only from loopback. The pod reaches it through a user socket on
+  the node's pod-network address that forwards to loopback, so nothing new listens on the LAN. Re-run the hand-over if
+  K3s is reinstalled and the address changes.
+- The restart button runs `sudo systemctl` on the host. A pod can neither do that nor be given it, so K3s mode sets
+  `MAGNETO_RESTART_ENABLED=0` instead of widening the pod's privileges.
+- The app's Host-header guard refuses the pod's own address, so the readiness probe must send `Host: 127.0.0.1`.
+- Carry Transmission's password into the cluster one file per value (`kubectl create secret --from-file=DIR`);
+  `--from-env-file` keeps quotes literally and corrupts a password containing them.
