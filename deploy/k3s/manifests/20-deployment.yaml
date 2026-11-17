@@ -36,6 +36,11 @@ spec:
             - {name: MAGNETO_NOTIFY_ENABLED, value: "0"}
             # The restart button runs `sudo systemctl` on the host, which a pod can neither do nor be given.
             - {name: MAGNETO_RESTART_ENABLED, value: "0"}
+            # The pod user has no home directory (HOME is /), so the default ~/.local/state is on the read-only
+            # root filesystem. Defaults saved from the page go to the writable /tmp volume instead; they last
+            # until the pod restarts, and MAGNETO_DEFAULT_* in the host settings remain the durable baseline.
+            - {name: MAGNETO_SETTINGS_FILE, value: "/tmp/magneto-settings.json"}
+            - {name: XDG_STATE_HOME, value: "/tmp/state"}
           envFrom:
             - secretRef: {name: magneto-env}   # Transmission credentials, session key and origins, from the host
           # The app refuses any Host that is not loopback or its registered name (a DNS-rebinding guard), so the
