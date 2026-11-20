@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import base64
 from dataclasses import dataclass
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from typing import Any, Protocol
 
 import requests
@@ -306,7 +306,7 @@ def format_eta(seconds: int) -> str:
 def format_timestamp(value: int) -> str:
     if not value:
         return "-"
-    return datetime.fromtimestamp(value, tz=timezone.utc).astimezone().strftime("%Y-%m-%d %H:%M")
+    return datetime.fromtimestamp(value, tz=UTC).astimezone().strftime("%Y-%m-%d %H:%M")
 
 
 def tracker_status(tracker_stats: list[dict[str, Any]]) -> str:
