@@ -10,6 +10,7 @@ Mark items `[x]` when complete and move them to Done.
 
 ## Pending
 
+- [ ] [codecov:2026-11-20] **Raise patch coverage on PR #36: 50% patched, 1 changed lines have no test coverage.** Files: src/magneto/transmission.py (1 missing, 50%). Add tests for the uncovered lines. (codecov-pr:36, https://github.com/casonk/magneto/pull/36#issuecomment-7048900820)
 - [ ] [manual:2026-10-15] **Ask GitHub Support to purge pre-rewrite commits** — this
   repository's published history was rewritten (most recently on 2026-10-15,
   to remove per-commit AI attribution trailers). GitHub keeps serving the old
